@@ -1,0 +1,49 @@
+# Example Terraform Variables
+# Copy this file to terraform.tfvars and update with your values
+
+# General Configuration
+aws_region  = "us-east-1"
+project_name = "loanprocessing"
+environment = "workshop"
+cost_center = "ModernizationWorkshop"
+
+# Networking Configuration
+vpc_cidr             = "10.0.0.0/16"
+public_subnet_cidrs  = ["10.0.1.0/24", "10.0.2.0/24"]
+private_subnet_cidrs = ["10.0.10.0/24", "10.0.11.0/24"]
+enable_nat_gateway   = false  # Set to true if EC2 instances need outbound internet
+
+# Compute Configuration
+instance_type        = "t3.medium"
+ami_id               = ""  # Leave empty to use latest Windows Server 2022
+key_name             = ""  # Optional: EC2 key pair name (use SSM Session Manager instead)
+asg_min_size         = 1
+asg_max_size         = 2
+asg_desired_capacity = 1
+
+# Database Configuration
+db_instance_class         = "db.t3.small"
+db_allocated_storage      = 20
+db_engine_version         = "15.00.4335.1.v1"  # SQL Server 2019 Express
+db_name                   = "LoanProcessing"
+db_username               = "sqladmin"
+db_multi_az               = true
+db_backup_retention_period = 7
+
+# Monitoring Configuration
+alarm_email = ""  # Optional: Email for CloudWatch alarms
+
+# Application Configuration
+app_version = "1.0.0"
+enable_detailed_monitoring = false
+
+# Security Configuration
+allowed_cidr_blocks = ["0.0.0.0/0"]  # Restrict to your IP for production
+enable_waf          = false
+
+# Additional Tags
+additional_tags = {
+  Owner       = "YourName"
+  Department  = "Engineering"
+  CostCenter  = "Workshop"
+}

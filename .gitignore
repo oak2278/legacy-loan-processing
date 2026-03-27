@@ -243,3 +243,13 @@ Test-*.ps1
 
 # Deployment outputs
 deployment-outputs.txt
+
+# Terraform sensitive and generated files
+*.tfvars
+!*.tfvars.example
+*.tfstate
+*.tfstate.backup
+*.tfplan
+tfplan
+.terraform/
+.terraform.lock.hcl

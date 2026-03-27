@@ -1,0 +1,247 @@
+# =============================================================================
+# CI/CD Module Configuration Example
+# =============================================================================
+# This file provides example values for all required and optional variables
+# in the CI/CD Terraform module. Copy this file to terraform.tfvars and
+# customize the values for your specific environment.
+#
+# Usage:
+#   1. Copy this file: cp terraform.tfvars.example terraform.tfvars
+#   2. Update values to match your AWS environment
+#   3. Run: terraform plan -var-file=terraform.tfvars
+#   4. Run: terraform apply -var-file=terraform.tfvars
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# REQUIRED VARIABLES
+# -----------------------------------------------------------------------------
+
+# Environment name - determines resource naming and configuration
+# Valid values: dev, staging, production, workshop
+# This affects:
+#   - Resource naming (e.g., loan-processing-pipeline-dev)
+#   - Manual approval requirements (production requires approval)
+#   - CloudWatch log retention
+#   - Deployment strategies
+environment = "dev"
+
+# AWS region where all CI/CD resources will be created
+# Must match the region of your existing infrastructure (VPC, EC2, RDS, ALB)
+# Common values: us-east-1, us-west-2, eu-west-1, eu-west-2
+aws_region = "eu-west-2"
+
+# ARN of the CodeStar Connection for GitHub integration
+# This connection must be created manually in the AWS Console before running Terraform
+# Steps to create:
+#   1. Go to AWS Console > Developer Tools > Settings > Connections
+#   2. Create connection > GitHub > Authorize AWS
+#   3. Copy the ARN (format: arn:aws:codestar-connections:region:account:connection/uuid)
+# Example: "arn:aws:codestar-connections:eu-west-2:123456789012:connection/abcd1234-5678-90ef-ghij-klmnopqrstuv"
+github_connection_arn = "arn:aws:codestar-connections:REGION:ACCOUNT_ID:connection/CONNECTION_ID"
+
+# ARN of the IAM role attached to EC2 instances
+# This role is typically created by your infrastructure/security module
+# The CI/CD module will add additional policies to this role for:
+#   - S3 access to artifact bucket
+#   - Secrets Manager access for database credentials
+#   - Systems Manager Parameter Store access
+#   - CloudWatch Logs access
+# Example: "arn:aws:iam::123456789012:role/loan-processing-ec2-instance-role"
+ec2_instance_role_arn = "arn:aws:iam::ACCOUNT_ID:role/INSTANCE_ROLE_NAME"
+
+# Name of the Auto Scaling Group containing EC2 instances for deployment
+# CodeDeploy will deploy the application to all instances in this ASG
+# This ASG should already exist (created by your infrastructure module)
+# Example: "loan-processing-asg-dev"
+asg_name = "loan-processing-asg-dev"
+
+# Name of the Application Load Balancer target group
+# CodeDeploy will deregister instances from this target group during deployment
+# and re-register them after successful health checks
+# This target group should already exist (created by your infrastructure module)
+# Example: "loan-processing-tg-dev"
+target_group_name = "loan-processing-tg-dev"
+
+# Email address for pipeline notifications
+# This email will receive notifications for:
+#   - Pipeline started
+#   - Build succeeded/failed
+#   - Deployment succeeded/failed
+#   - Rollback events
+# You must confirm the SNS subscription after first deployment
+# Example: "devops-team@example.com"
+notification_email = "your-email@example.com"
+
+# ARN of the Secrets Manager secret containing database credentials
+# This secret is typically created by your database infrastructure module
+# The secret should contain: username, password, host, port, dbname, engine
+# The CI/CD module will:
+#   - Grant EC2 instances permission to read this secret
+#   - Store the ARN in SSM Parameter Store for deployment scripts
+# Example: "arn:aws:secretsmanager:eu-west-2:123456789012:secret:loan-processing/dev/db-credentials-AbCdEf"
+db_secret_arn = "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:SECRET_NAME"
+
+# -----------------------------------------------------------------------------
+# OPTIONAL VARIABLES (with defaults)
+# -----------------------------------------------------------------------------
+
+# Full GitHub repository ID in format 'owner/repo'
+# Default: "aws-shawn/legacy-loan-processing"
+# Change this if you forked the repository or are using a different repo
+# github_repository_id = "your-org/your-repo"
+
+# GitHub branch name to monitor for changes
+# Default: "main"
+# The pipeline will trigger when commits are pushed to this branch
+# For development environments, you might use "develop" or "dev"
+# github_branch_name = "main"
+
+# Whether to require manual approval before deployment
+# Default: false
+# Set to true for production environments to add a manual approval stage
+# between the Build and Deploy stages
+# When true, deployments will pause and wait for manual approval in AWS Console
+# require_manual_approval = false
+
+# Common tags to apply to all resources
+# Default: {}
+# These tags help with cost tracking, resource organization, and compliance
+# common_tags = {
+#   Project     = "LoanProcessing"
+#   ManagedBy   = "Terraform"
+#   CostCenter  = "Engineering"
+#   Owner       = "DevOps Team"
+# }
+
+# =============================================================================
+# ENVIRONMENT-SPECIFIC EXAMPLES
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# DEVELOPMENT ENVIRONMENT EXAMPLE
+# -----------------------------------------------------------------------------
+# Development environment configuration for rapid iteration and testing
+# Characteristics:
+#   - No manual approval required
+#   - Deploys automatically on every commit to main/develop branch
+#   - Lower resource costs
+#   - Shorter log retention
+#
+# environment              = "dev"
+# aws_region              = "eu-west-2"
+# github_connection_arn   = "arn:aws:codestar-connections:eu-west-2:123456789012:connection/dev-connection-id"
+# ec2_instance_role_arn   = "arn:aws:iam::123456789012:role/loan-processing-ec2-dev"
+# asg_name                = "loan-processing-asg-dev"
+# target_group_name       = "loan-processing-tg-dev"
+# notification_email      = "dev-team@example.com"
+# db_secret_arn           = "arn:aws:secretsmanager:eu-west-2:123456789012:secret:loan-processing/dev/db-credentials-AbCdEf"
+# github_branch_name      = "develop"
+# require_manual_approval = false
+# common_tags = {
+#   Environment = "Development"
+#   Project     = "LoanProcessing"
+#   ManagedBy   = "Terraform"
+# }
+
+# -----------------------------------------------------------------------------
+# STAGING ENVIRONMENT EXAMPLE
+# -----------------------------------------------------------------------------
+# Staging environment configuration for pre-production testing
+# Characteristics:
+#   - Optional manual approval (recommended for testing approval workflow)
+#   - Deploys from main branch
+#   - Production-like configuration
+#   - Used for QA and UAT testing
+#
+# environment              = "staging"
+# aws_region              = "eu-west-2"
+# github_connection_arn   = "arn:aws:codestar-connections:eu-west-2:123456789012:connection/staging-connection-id"
+# ec2_instance_role_arn   = "arn:aws:iam::123456789012:role/loan-processing-ec2-staging"
+# asg_name                = "loan-processing-asg-staging"
+# target_group_name       = "loan-processing-tg-staging"
+# notification_email      = "qa-team@example.com"
+# db_secret_arn           = "arn:aws:secretsmanager:eu-west-2:123456789012:secret:loan-processing/staging/db-credentials-XyZ123"
+# github_branch_name      = "main"
+# require_manual_approval = true
+# common_tags = {
+#   Environment = "Staging"
+#   Project     = "LoanProcessing"
+#   ManagedBy   = "Terraform"
+# }
+
+# -----------------------------------------------------------------------------
+# PRODUCTION ENVIRONMENT EXAMPLE
+# -----------------------------------------------------------------------------
+# Production environment configuration for live customer-facing application
+# Characteristics:
+#   - Manual approval REQUIRED before deployment
+#   - Deploys from main branch only
+#   - Enhanced monitoring and alerting
+#   - Longer log retention
+#   - Rolling deployment strategy (one instance at a time)
+#
+# environment              = "production"
+# aws_region              = "eu-west-2"
+# github_connection_arn   = "arn:aws:codestar-connections:eu-west-2:123456789012:connection/prod-connection-id"
+# ec2_instance_role_arn   = "arn:aws:iam::123456789012:role/loan-processing-ec2-prod"
+# asg_name                = "loan-processing-asg-prod"
+# target_group_name       = "loan-processing-tg-prod"
+# notification_email      = "ops-team@example.com"
+# db_secret_arn           = "arn:aws:secretsmanager:eu-west-2:123456789012:secret:loan-processing/production/db-credentials-PqR789"
+# github_branch_name      = "main"
+# require_manual_approval = true
+# common_tags = {
+#   Environment = "Production"
+#   Project     = "LoanProcessing"
+#   ManagedBy   = "Terraform"
+#   Compliance  = "Required"
+#   Backup      = "Daily"
+# }
+
+# =============================================================================
+# NOTES AND BEST PRACTICES
+# =============================================================================
+#
+# 1. SECURITY:
+#    - Never commit terraform.tfvars to version control (add to .gitignore)
+#    - Use different CodeStar Connections for each environment
+#    - Ensure EC2 instance roles follow least-privilege principle
+#
+# 2. GITHUB CONNECTION:
+#    - Create the CodeStar Connection manually before running Terraform
+#    - The connection must be in "Available" status
+#    - You can reuse the same connection across environments if desired
+#
+# 3. EXISTING INFRASTRUCTURE:
+#    - Ensure VPC, EC2, RDS, and ALB are already deployed
+#    - Verify ASG and target group names match your infrastructure
+#    - EC2 instances must have Windows Server 2019 or later
+#    - EC2 instances must have IIS installed
+#
+# 4. NOTIFICATIONS:
+#    - After first deployment, check your email for SNS subscription confirmation
+#    - Click the confirmation link to start receiving notifications
+#    - You can add multiple email addresses by subscribing to the SNS topic manually
+#
+# 5. MANUAL APPROVAL:
+#    - For production, always set require_manual_approval = true
+#    - Approvers must have IAM permissions for codepipeline:PutApprovalResult
+#    - Approval timeout is 7 days (configurable in codepipeline.tf)
+#
+# 6. COST OPTIMIZATION:
+#    - Development environments can use smaller EC2 instances
+#    - Consider using scheduled scaling to stop dev instances outside business hours
+#    - Monitor CloudWatch Logs retention to control storage costs
+#
+# 7. MULTI-REGION:
+#    - If deploying to multiple regions, create separate terraform.tfvars files
+#    - Example: terraform.tfvars.us-east-1, terraform.tfvars.eu-west-2
+#    - Use: terraform apply -var-file=terraform.tfvars.us-east-1
+#
+# 8. TROUBLESHOOTING:
+#    - If pipeline fails to trigger, verify CodeStar Connection status
+#    - If build fails, check CodeBuild logs in CloudWatch
+#    - If deployment fails, check CodeDeploy logs on EC2 instances
+#    - Verify EC2 instances have CodeDeploy agent installed and running
+#
+# =============================================================================
