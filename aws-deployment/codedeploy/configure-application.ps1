@@ -303,7 +303,7 @@ try {
     
 } catch {
     Write-DeploymentLog "Fatal error in AfterInstall hook: ${_}" "ERROR"
-    Write-DeploymentLog "Stack trace: $($_.ScriptStackTrace)" "ERROR"
+    Write-DeploymentLog "Stack trace: $(${_}.ScriptStackTrace)" "ERROR"
     
     # Exit with error code to fail deployment
     # Configuration failures should prevent deployment from continuing

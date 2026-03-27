@@ -94,7 +94,7 @@ try {
     
 } catch {
     Write-DeploymentLog "Fatal error in ApplicationStop hook: ${_}" "ERROR"
-    Write-DeploymentLog "Stack trace: $($_.ScriptStackTrace)" "ERROR"
+    Write-DeploymentLog "Stack trace: $(${_}.ScriptStackTrace)" "ERROR"
     
     # Exit with 0 to allow deployment to continue even if stop fails
     # This handles first-time deployments where IIS components don't exist yet

@@ -269,7 +269,7 @@ try {
     
 } catch {
     Write-DeploymentLog "Fatal error in ApplicationStart hook: ${_}" "ERROR"
-    Write-DeploymentLog "Stack trace: $($_.ScriptStackTrace)" "ERROR"
+    Write-DeploymentLog "Stack trace: $(${_}.ScriptStackTrace)" "ERROR"
     
     # Exit with error code to fail deployment
     # Application start failures should trigger rollback

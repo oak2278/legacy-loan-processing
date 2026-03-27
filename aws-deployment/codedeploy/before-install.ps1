@@ -109,7 +109,7 @@ try {
     
 } catch {
     Write-DeploymentLog "Fatal error in BeforeInstall hook: ${_}" "ERROR"
-    Write-DeploymentLog "Stack trace: $($_.ScriptStackTrace)" "ERROR"
+    Write-DeploymentLog "Stack trace: $(${_}.ScriptStackTrace)" "ERROR"
     
     # Exit with error code to fail deployment
     # Backup failures should prevent deployment to enable rollback capability
