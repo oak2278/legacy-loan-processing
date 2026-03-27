@@ -52,8 +52,8 @@ try {
             New-WebAppPool -Name $appPoolName -ErrorAction Stop
             Write-DeploymentLog "Application pool created successfully"
         } catch {
-            Write-DeploymentLog "Failed to create application pool: $_" "ERROR"
-            throw "Application pool creation failed: $_"
+            Write-DeploymentLog "Failed to create application pool: ${_}" "ERROR"
+            throw "Application pool creation failed: ${_}"
         }
     } else {
         Write-DeploymentLog "Application pool already exists: $appPoolName"
@@ -77,8 +77,8 @@ try {
         Write-DeploymentLog "Application pool configured successfully"
         
     } catch {
-        Write-DeploymentLog "Failed to configure application pool: $_" "ERROR"
-        throw "Application pool configuration failed: $_"
+        Write-DeploymentLog "Failed to configure application pool: ${_}" "ERROR"
+        throw "Application pool configuration failed: ${_}"
     }
     
     # ============================================================================
@@ -105,8 +105,8 @@ try {
             Write-DeploymentLog "Website created successfully (port: $port, path: $appPath, app pool: $appPoolName)"
             
         } catch {
-            Write-DeploymentLog "Failed to create website: $_" "ERROR"
-            throw "Website creation failed: $_"
+            Write-DeploymentLog "Failed to create website: ${_}" "ERROR"
+            throw "Website creation failed: ${_}"
         }
     } else {
         Write-DeploymentLog "Website already exists: $siteName"
@@ -119,8 +119,8 @@ try {
             Write-DeploymentLog "Website configuration updated (path: $appPath, app pool: $appPoolName)"
             
         } catch {
-            Write-DeploymentLog "Failed to update website configuration: $_" "ERROR"
-            throw "Website configuration update failed: $_"
+            Write-DeploymentLog "Failed to update website configuration: ${_}" "ERROR"
+            throw "Website configuration update failed: ${_}"
         }
     }
     
@@ -156,8 +156,8 @@ try {
         }
         
     } catch {
-        Write-DeploymentLog "Failed to start application pool: $_" "ERROR"
-        throw "Application pool start failed: $_"
+        Write-DeploymentLog "Failed to start application pool: ${_}" "ERROR"
+        throw "Application pool start failed: ${_}"
     }
     
     # ============================================================================
@@ -203,14 +203,14 @@ try {
             }
             
         } catch {
-            Write-DeploymentLog "Website start attempt $attempt failed: $_" "WARN"
+            Write-DeploymentLog "Website start attempt $attempt failed: ${_}" "WARN"
             
             if ($attempt -lt $maxAttempts) {
                 Write-DeploymentLog "Retrying in $retryDelaySeconds seconds..." "WARN"
                 Start-Sleep -Seconds $retryDelaySeconds
             } else {
                 Write-DeploymentLog "All website start attempts failed" "ERROR"
-                throw "Failed to start website after $maxAttempts attempts: $_"
+                throw "Failed to start website after $maxAttempts attempts: ${_}"
             }
         }
     }
@@ -253,8 +253,8 @@ try {
         Write-DeploymentLog "IIS configuration verification passed"
         
     } catch {
-        Write-DeploymentLog "IIS configuration verification failed: $_" "ERROR"
-        throw "Configuration verification failed: $_"
+        Write-DeploymentLog "IIS configuration verification failed: ${_}" "ERROR"
+        throw "Configuration verification failed: ${_}"
     }
     
     Write-DeploymentLog "ApplicationStart lifecycle hook completed successfully"
@@ -262,7 +262,7 @@ try {
     exit 0
     
 } catch {
-    Write-DeploymentLog "Fatal error in ApplicationStart hook: $_" "ERROR"
+    Write-DeploymentLog "Fatal error in ApplicationStart hook: ${_}" "ERROR"
     Write-DeploymentLog "Stack trace: $($_.ScriptStackTrace)" "ERROR"
     
     # Exit with error code to fail deployment

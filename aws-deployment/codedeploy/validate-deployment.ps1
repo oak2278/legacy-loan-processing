@@ -63,8 +63,8 @@ try {
         Write-DeploymentLog "IIS service check passed - W3SVC is running"
         
     } catch {
-        Write-DeploymentLog "Failed to check IIS service: $_" "ERROR"
-        throw "IIS service check failed: $_"
+        Write-DeploymentLog "Failed to check IIS service: ${_}" "ERROR"
+        throw "IIS service check failed: ${_}"
     }
     
     # ============================================================================
@@ -89,8 +89,8 @@ try {
         Write-DeploymentLog "Website state check passed - '$siteName' is started"
         
     } catch {
-        Write-DeploymentLog "Failed to check website state: $_" "ERROR"
-        throw "Website state check failed: $_"
+        Write-DeploymentLog "Failed to check website state: ${_}" "ERROR"
+        throw "Website state check failed: ${_}"
     }
     
     # ============================================================================
@@ -126,7 +126,7 @@ try {
             }
             
         } catch {
-            Write-DeploymentLog "HTTP health check attempt $attempt failed: $_" "WARN"
+            Write-DeploymentLog "HTTP health check attempt $attempt failed: ${_}" "WARN"
             
             if ($attempt -lt $maxAttempts) {
                 Write-DeploymentLog "Retrying in $retryDelaySeconds seconds..." "WARN"
@@ -197,7 +197,7 @@ try {
     } catch {
         # Database connectivity failures are logged as warnings, not errors
         # Per requirements 8.7: Log warning (not failure) if database connectivity check fails
-        Write-DeploymentLog "Database connectivity check failed: $_" "WARN"
+        Write-DeploymentLog "Database connectivity check failed: ${_}" "WARN"
         Write-DeploymentLog "This is a non-critical warning - deployment validation will continue" "WARN"
         Write-DeploymentLog "Database may not be accessible, but application deployment is considered successful" "WARN"
     }
@@ -217,7 +217,7 @@ try {
     exit 0
     
 } catch {
-    Write-DeploymentLog "Fatal error in ValidateService hook: $_" "ERROR"
+    Write-DeploymentLog "Fatal error in ValidateService hook: ${_}" "ERROR"
     Write-DeploymentLog "Stack trace: $($_.ScriptStackTrace)" "ERROR"
     Write-DeploymentLog "Deployment validation failed - this will trigger automatic rollback"
     

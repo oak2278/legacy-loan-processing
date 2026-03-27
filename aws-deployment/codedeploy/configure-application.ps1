@@ -66,7 +66,7 @@ try {
         try {
             $secretArn = & $awsCli ssm get-parameter --name "/loan-processing/$($deployConfig.Environment)/db-secret-arn" --query "Parameter.Value" --output text --region $awsRegion 2>&1
         } catch {
-            throw "Cannot retrieve DB secret ARN: $_"
+            throw "Cannot retrieve DB secret ARN: ${_}"
         }
     }
     
@@ -87,8 +87,8 @@ try {
         Write-DeploymentLog "Successfully retrieved secret from Secrets Manager"
         
     } catch {
-        Write-DeploymentLog "Failed to retrieve secret from Secrets Manager: $_" "ERROR"
-        throw "Secrets Manager retrieval failed - deployment cannot continue: $_"
+        Write-DeploymentLog "Failed to retrieve secret from Secrets Manager: ${_}" "ERROR"
+        throw "Secrets Manager retrieval failed - deployment cannot continue: ${_}"
     }
     
     # Parse secret JSON
@@ -110,8 +110,8 @@ try {
         Write-DeploymentLog "Successfully parsed database credentials (host: $dbHost, database: $dbName, username: $dbUsername)"
         
     } catch {
-        Write-DeploymentLog "Failed to parse secret JSON: $_" "ERROR"
-        throw "Invalid secret format - deployment cannot continue: $_"
+        Write-DeploymentLog "Failed to parse secret JSON: ${_}" "ERROR"
+        throw "Invalid secret format - deployment cannot continue: ${_}"
     }
     
     # ============================================================================
@@ -174,8 +174,8 @@ try {
         Write-DeploymentLog "Web.config updated successfully with database connection string"
         
     } catch {
-        Write-DeploymentLog "Failed to update Web.config: $_" "ERROR"
-        throw "Web.config update failed - deployment cannot continue: $_"
+        Write-DeploymentLog "Failed to update Web.config: ${_}" "ERROR"
+        throw "Web.config update failed - deployment cannot continue: ${_}"
     }
     
     # ============================================================================
@@ -199,7 +199,7 @@ try {
         Write-DeploymentLog "Database existence check result: $dbExists (0=does not exist, 1=exists)"
         
     } catch {
-        Write-DeploymentLog "Failed to check database existence: $_" "ERROR"
+        Write-DeploymentLog "Failed to check database existence: ${_}" "ERROR"
         Write-DeploymentLog "Database connectivity check failed - this may indicate network or credential issues" "WARN"
         Write-DeploymentLog "Deployment will continue, but database initialization may be skipped" "WARN"
         
@@ -264,7 +264,7 @@ try {
                 Write-DeploymentLog "Database initialization completed successfully"
                 
             } catch {
-                Write-DeploymentLog "Database initialization failed: $_" "WARN"
+                Write-DeploymentLog "Database initialization failed: ${_}" "WARN"
                 Write-DeploymentLog "Deployment will continue despite database initialization failure" "WARN"
                 Write-DeploymentLog "Manual database setup may be required" "WARN"
                 
@@ -295,14 +295,14 @@ try {
             Write-DeploymentLog "Web.config verification failed - connection string not found" "WARN"
         }
     } catch {
-        Write-DeploymentLog "Web.config verification failed: $_" "WARN"
+        Write-DeploymentLog "Web.config verification failed: ${_}" "WARN"
     }
     
     Write-DeploymentLog "AfterInstall lifecycle hook completed successfully"
     exit 0
     
 } catch {
-    Write-DeploymentLog "Fatal error in AfterInstall hook: $_" "ERROR"
+    Write-DeploymentLog "Fatal error in AfterInstall hook: ${_}" "ERROR"
     Write-DeploymentLog "Stack trace: $($_.ScriptStackTrace)" "ERROR"
     
     # Exit with error code to fail deployment

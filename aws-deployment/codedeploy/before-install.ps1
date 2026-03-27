@@ -35,8 +35,8 @@ try {
         New-Item -Path $backupPath -ItemType Directory -Force -ErrorAction Stop | Out-Null
         Write-DeploymentLog "Backup directory created successfully"
     } catch {
-        Write-DeploymentLog "Error creating backup directory: $_" "ERROR"
-        throw "Failed to create backup directory: $_"
+        Write-DeploymentLog "Error creating backup directory: ${_}" "ERROR"
+        throw "Failed to create backup directory: ${_}"
     }
     
     # Check if application directory exists
@@ -52,8 +52,8 @@ try {
                 Copy-Item -Path $webConfigPath -Destination $webConfigBackupPath -Force -ErrorAction Stop
                 Write-DeploymentLog "Web.config backed up successfully to $webConfigBackupPath"
             } catch {
-                Write-DeploymentLog "Error backing up Web.config: $_" "ERROR"
-                throw "Failed to backup Web.config: $_"
+                Write-DeploymentLog "Error backing up Web.config: ${_}" "ERROR"
+                throw "Failed to backup Web.config: ${_}"
             }
         } else {
             Write-DeploymentLog "Web.config not found at $webConfigPath, skipping Web.config backup" "WARN"
@@ -73,8 +73,8 @@ try {
             Write-DeploymentLog "Application files backed up successfully ($fileCount files) to $appBackupPath"
             
         } catch {
-            Write-DeploymentLog "Error backing up application files: $_" "ERROR"
-            throw "Failed to backup application files: $_"
+            Write-DeploymentLog "Error backing up application files: ${_}" "ERROR"
+            throw "Failed to backup application files: ${_}"
         }
         
     } else {
@@ -100,7 +100,7 @@ try {
             }
         }
     } catch {
-        Write-DeploymentLog "Error cleaning up old backups: $_" "WARN"
+        Write-DeploymentLog "Error cleaning up old backups: ${_}" "WARN"
         # Don't fail deployment if cleanup fails
     }
     
@@ -108,7 +108,7 @@ try {
     exit 0
     
 } catch {
-    Write-DeploymentLog "Fatal error in BeforeInstall hook: $_" "ERROR"
+    Write-DeploymentLog "Fatal error in BeforeInstall hook: ${_}" "ERROR"
     Write-DeploymentLog "Stack trace: $($_.ScriptStackTrace)" "ERROR"
     
     # Exit with error code to fail deployment
