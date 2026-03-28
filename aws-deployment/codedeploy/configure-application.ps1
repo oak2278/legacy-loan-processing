@@ -34,6 +34,8 @@ function Write-SafeLog {
     Write-DeploymentLog $safeMessage $Level
 }
 
+Import-Module SqlServer
+
 try {
     Write-DeploymentLog "Starting AfterInstall lifecycle hook - Configure Application"
     
@@ -187,14 +189,10 @@ try {
     $checkDbQuery = "SELECT COUNT(*) FROM sys.databases WHERE name = '$dbName'"
     
     try {
-        # Use sqlcmd to check database existence
-        $dbExistsResult = sqlcmd -S $dbHost -U $dbUsername -P $dbPassword -Q $checkDbQuery -h -1 -W
+        # Use Invoke-Sqlcmd to check database existence
+        $dbExistsResult = Invoke-Sqlcmd -ServerInstance $dbHost -Username $dbUsername -Password $dbPassword -Query $checkDbQuery -TrustServerCertificate
         
-        if ($LASTEXITCODE -ne 0) {
-            throw "sqlcmd returned exit code $LASTEXITCODE"
-        }
-        
-        $dbExists = [int]$dbExistsResult.Trim()
+        $dbExists = [int]$dbExistsResult[0]
         
         Write-DeploymentLog "Database existence check result: $dbExists (0=does not exist, 1=exists)"
         
@@ -216,6 +214,8 @@ try {
         
         $databaseScriptsPath = "C:\Deploy\database"
         $createDatabaseScript = Join-Path $databaseScriptsPath "CreateDatabase.sql"
+        $storedProcsScript = Join-Path $databaseScriptsPath "CreateStoredProcedures_Task3.sql"
+        $searchAutocompleteScript = Join-Path $databaseScriptsPath "CreateSearchCustomersAutocomplete.sql"
         $initializeSampleDataScript = Join-Path $databaseScriptsPath "InitializeSampleData.sql"
         
         # Verify scripts exist
@@ -231,11 +231,7 @@ try {
                 # Create database
                 Write-DeploymentLog "Creating database '$dbName'"
                 $createDbQuery = "CREATE DATABASE [$dbName]"
-                sqlcmd -S $dbHost -U $dbUsername -P $dbPassword -Q $createDbQuery
-                
-                if ($LASTEXITCODE -ne 0) {
-                    throw "Failed to create database (exit code: $LASTEXITCODE)"
-                }
+                Invoke-Sqlcmd -ServerInstance $dbHost -Username $dbUsername -Password $dbPassword -Query $createDbQuery -TrustServerCertificate
                 
                 Write-DeploymentLog "Database '$dbName' created successfully"
                 
@@ -244,23 +240,38 @@ try {
                 
                 # Run CreateDatabase.sql to create schema
                 Write-DeploymentLog "Running CreateDatabase.sql to create tables and stored procedures"
-                sqlcmd -S $dbHost -U $dbUsername -P $dbPassword -d $dbName -i $createDatabaseScript -b
-                
-                if ($LASTEXITCODE -ne 0) {
-                    throw "Failed to execute CreateDatabase.sql (exit code: $LASTEXITCODE)"
-                }
+                Invoke-Sqlcmd -ServerInstance $dbHost -Username $dbUsername -Password $dbPassword -Database $dbName -InputFile $createDatabaseScript -TrustServerCertificate
                 
                 Write-DeploymentLog "Database schema created successfully"
                 
+                # Run CreateStoredProcedures_Task3.sql to create stored procedures
+                Write-DeploymentLog "Running CreateStoredProcedures_Task3.sql to create stored procedures"
+                Invoke-Sqlcmd -ServerInstance $dbHost -Username $dbUsername -Password $dbPassword -Database $dbName -InputFile $storedProcsScript -TrustServerCertificate
+                
+                Write-DeploymentLog "Stored procedures created successfully"
+                
+                # Run CreateSearchCustomersAutocomplete.sql to create autocomplete procedure
+                Write-DeploymentLog "Running CreateSearchCustomersAutocomplete.sql to create autocomplete procedure"
+                Invoke-Sqlcmd -ServerInstance $dbHost -Username $dbUsername -Password $dbPassword -Database $dbName -InputFile $searchAutocompleteScript -TrustServerCertificate
+                
+                Write-DeploymentLog "Autocomplete procedure created successfully"
+                
                 # Run InitializeSampleData.sql to load sample data
                 Write-DeploymentLog "Running InitializeSampleData.sql to load sample data"
-                sqlcmd -S $dbHost -U $dbUsername -P $dbPassword -d $dbName -i $initializeSampleDataScript -b
-                
-                if ($LASTEXITCODE -ne 0) {
-                    throw "Failed to execute InitializeSampleData.sql (exit code: $LASTEXITCODE)"
-                }
+                Invoke-Sqlcmd -ServerInstance $dbHost -Username $dbUsername -Password $dbPassword -Database $dbName -InputFile $initializeSampleDataScript -TrustServerCertificate
                 
                 Write-DeploymentLog "Sample data loaded successfully"
+                
+                # Verify stored procedures exist
+                Write-DeploymentLog "Verifying stored procedures..."
+                $verifyProcsQuery = "SELECT name FROM sys.objects WHERE type = 'P' AND name IN ('sp_SearchCustomers', 'sp_GetCustomerById', 'sp_UpdateCustomer', 'sp_CreateCustomer', 'sp_SearchCustomersAutocomplete') ORDER BY name"
+                $procs = Invoke-Sqlcmd -ServerInstance $dbHost -Username $dbUsername -Password $dbPassword -Database $dbName -Query $verifyProcsQuery -TrustServerCertificate
+                $procCount = ($procs | Measure-Object).Count
+                Write-DeploymentLog "Verified $procCount/5 stored procedures exist"
+                if ($procCount -lt 5) {
+                    Write-DeploymentLog "WARNING: Not all stored procedures were created" "WARN"
+                }
+                
                 Write-DeploymentLog "Database initialization completed successfully"
                 
             } catch {
@@ -274,7 +285,38 @@ try {
         }
         
     } else {
-        Write-DeploymentLog "Database '$dbName' already exists - skipping initialization"
+        Write-DeploymentLog "Database '$dbName' already exists - re-applying stored procedures"
+        
+        $databaseScriptsPath = "C:\Deploy\database"
+        $storedProcsScript = Join-Path $databaseScriptsPath "CreateStoredProcedures_Task3.sql"
+        $searchAutocompleteScript = Join-Path $databaseScriptsPath "CreateSearchCustomersAutocomplete.sql"
+        
+        try {
+            # Re-run stored procedure scripts (they use IF OBJECT_ID/DROP/CREATE - inherently idempotent)
+            Write-DeploymentLog "Running CreateStoredProcedures_Task3.sql to update stored procedures"
+            Invoke-Sqlcmd -ServerInstance $dbHost -Username $dbUsername -Password $dbPassword -Database $dbName -InputFile $storedProcsScript -TrustServerCertificate
+            
+            Write-DeploymentLog "Stored procedures updated successfully"
+            
+            Write-DeploymentLog "Running CreateSearchCustomersAutocomplete.sql to update autocomplete procedure"
+            Invoke-Sqlcmd -ServerInstance $dbHost -Username $dbUsername -Password $dbPassword -Database $dbName -InputFile $searchAutocompleteScript -TrustServerCertificate
+            
+            Write-DeploymentLog "Autocomplete procedure updated successfully"
+            
+            # Verify stored procedures exist
+            Write-DeploymentLog "Verifying stored procedures..."
+            $verifyProcsQuery = "SELECT name FROM sys.objects WHERE type = 'P' AND name IN ('sp_SearchCustomers', 'sp_GetCustomerById', 'sp_UpdateCustomer', 'sp_CreateCustomer', 'sp_SearchCustomersAutocomplete') ORDER BY name"
+            $procs = Invoke-Sqlcmd -ServerInstance $dbHost -Username $dbUsername -Password $dbPassword -Database $dbName -Query $verifyProcsQuery -TrustServerCertificate
+            $procCount = ($procs | Measure-Object).Count
+            Write-DeploymentLog "Verified $procCount/5 stored procedures exist"
+            if ($procCount -lt 5) {
+                Write-DeploymentLog "WARNING: Not all stored procedures were created" "WARN"
+            }
+            
+        } catch {
+            Write-DeploymentLog "Stored procedure update failed: ${_}" "WARN"
+            Write-DeploymentLog "Deployment will continue despite stored procedure update failure" "WARN"
+        }
     }
     
     # ============================================================================

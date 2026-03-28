@@ -41,6 +41,11 @@ try {
         Write-Host ".NET Framework 4.7.2 or higher already installed"
     }
 
+    # Install SqlServer PowerShell module for database operations
+    Write-Host "Installing SqlServer PowerShell module..."
+    Install-Module SqlServer -Force -AllowClobber -Scope AllUsers
+    Write-Host "SqlServer module installed"
+
     # Install CloudWatch Agent
     Write-Host "Installing CloudWatch Agent..."
     $cwAgentUrl = "https://s3.amazonaws.com/amazoncloudwatch-agent/windows/amd64/latest/amazon-cloudwatch-agent.msi"

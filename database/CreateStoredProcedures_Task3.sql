@@ -178,6 +178,9 @@ BEGIN
             OR [LastName] LIKE '%' + @SearchTerm + '%'
             OR ([FirstName] + ' ' + [LastName]) LIKE '%' + @SearchTerm + '%'
         ))
+        OR
+        -- Return all customers when no search criteria provided
+        (@SearchTerm IS NULL AND @CustomerId IS NULL AND @SSN IS NULL)
     ORDER BY 
         [LastName], [FirstName];
     
