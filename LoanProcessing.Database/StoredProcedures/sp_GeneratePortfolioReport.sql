@@ -4,6 +4,11 @@
 --              loan type breakdown, and risk distribution
 -- Requirements: 6.1, 6.2, 6.3, 6.4, 6.5
 -- =============================================
+
+IF OBJECT_ID('dbo.sp_GeneratePortfolioReport', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.sp_GeneratePortfolioReport;
+GO
+
 CREATE PROCEDURE sp_GeneratePortfolioReport
     @StartDate DATE = NULL,
     @EndDate DATE = NULL,

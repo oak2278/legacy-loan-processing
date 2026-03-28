@@ -214,6 +214,11 @@ try {
         $createDatabaseScript = Join-Path $databaseScriptsPath "CreateDatabase.sql"
         $storedProcsScript = Join-Path $databaseScriptsPath "CreateStoredProcedures_Task3.sql"
         $searchAutocompleteScript = Join-Path $databaseScriptsPath "CreateSearchCustomersAutocomplete.sql"
+        $submitLoanScript = Join-Path $databaseScriptsPath "sp_SubmitLoanApplication.sql"
+        $evaluateCreditScript = Join-Path $databaseScriptsPath "sp_EvaluateCredit.sql"
+        $processLoanDecisionScript = Join-Path $databaseScriptsPath "sp_ProcessLoanDecision.sql"
+        $calculatePaymentScheduleScript = Join-Path $databaseScriptsPath "sp_CalculatePaymentSchedule.sql"
+        $generatePortfolioReportScript = Join-Path $databaseScriptsPath "sp_GeneratePortfolioReport.sql"
         $initializeSampleDataScript = Join-Path $databaseScriptsPath "InitializeSampleData.sql"
         
         # Verify scripts exist
@@ -254,6 +259,36 @@ try {
                 
                 Write-DeploymentLog "Autocomplete procedure created successfully"
                 
+                # Run sp_SubmitLoanApplication.sql to create loan submission procedure
+                Write-DeploymentLog "Running sp_SubmitLoanApplication.sql to create loan submission procedure"
+                Invoke-Sqlcmd -ServerInstance $dbHost -Username $dbUsername -Password $dbPassword -Database $dbName -InputFile $submitLoanScript -TrustServerCertificate
+                
+                Write-DeploymentLog "Loan submission procedure created successfully"
+                
+                # Run sp_EvaluateCredit.sql to create credit evaluation procedure
+                Write-DeploymentLog "Running sp_EvaluateCredit.sql to create credit evaluation procedure"
+                Invoke-Sqlcmd -ServerInstance $dbHost -Username $dbUsername -Password $dbPassword -Database $dbName -InputFile $evaluateCreditScript -TrustServerCertificate
+                
+                Write-DeploymentLog "Credit evaluation procedure created successfully"
+                
+                # Run sp_ProcessLoanDecision.sql to create loan decision procedure
+                Write-DeploymentLog "Running sp_ProcessLoanDecision.sql to create loan decision procedure"
+                Invoke-Sqlcmd -ServerInstance $dbHost -Username $dbUsername -Password $dbPassword -Database $dbName -InputFile $processLoanDecisionScript -TrustServerCertificate
+                
+                Write-DeploymentLog "Loan decision procedure created successfully"
+                
+                # Run sp_CalculatePaymentSchedule.sql to create payment schedule procedure
+                Write-DeploymentLog "Running sp_CalculatePaymentSchedule.sql to create payment schedule procedure"
+                Invoke-Sqlcmd -ServerInstance $dbHost -Username $dbUsername -Password $dbPassword -Database $dbName -InputFile $calculatePaymentScheduleScript -TrustServerCertificate
+                
+                Write-DeploymentLog "Payment schedule procedure created successfully"
+                
+                # Run sp_GeneratePortfolioReport.sql to create portfolio report procedure
+                Write-DeploymentLog "Running sp_GeneratePortfolioReport.sql to create portfolio report procedure"
+                Invoke-Sqlcmd -ServerInstance $dbHost -Username $dbUsername -Password $dbPassword -Database $dbName -InputFile $generatePortfolioReportScript -TrustServerCertificate
+                
+                Write-DeploymentLog "Portfolio report procedure created successfully"
+                
                 # Run InitializeSampleData.sql to load sample data
                 Write-DeploymentLog "Running InitializeSampleData.sql to load sample data"
                 Invoke-Sqlcmd -ServerInstance $dbHost -Username $dbUsername -Password $dbPassword -Database $dbName -InputFile $initializeSampleDataScript -TrustServerCertificate
@@ -262,11 +297,11 @@ try {
                 
                 # Verify stored procedures exist
                 Write-DeploymentLog "Verifying stored procedures..."
-                $verifyProcsQuery = "SELECT name FROM sys.objects WHERE type = 'P' AND name IN ('sp_SearchCustomers', 'sp_GetCustomerById', 'sp_UpdateCustomer', 'sp_CreateCustomer', 'sp_SearchCustomersAutocomplete') ORDER BY name"
+                $verifyProcsQuery = "SELECT name FROM sys.objects WHERE type = 'P' AND name IN ('sp_SearchCustomers', 'sp_GetCustomerById', 'sp_UpdateCustomer', 'sp_CreateCustomer', 'sp_SearchCustomersAutocomplete', 'sp_SubmitLoanApplication', 'sp_EvaluateCredit', 'sp_ProcessLoanDecision', 'sp_CalculatePaymentSchedule', 'sp_GeneratePortfolioReport') ORDER BY name"
                 $procs = Invoke-Sqlcmd -ServerInstance $dbHost -Username $dbUsername -Password $dbPassword -Database $dbName -Query $verifyProcsQuery -TrustServerCertificate
                 $procCount = ($procs | Measure-Object).Count
-                Write-DeploymentLog "Verified $procCount/5 stored procedures exist"
-                if ($procCount -lt 5) {
+                Write-DeploymentLog "Verified $procCount/10 stored procedures exist"
+                if ($procCount -lt 10) {
                     Write-DeploymentLog "WARNING: Not all stored procedures were created" "WARN"
                 }
                 
@@ -288,6 +323,11 @@ try {
         $databaseScriptsPath = "C:\Deploy\database"
         $storedProcsScript = Join-Path $databaseScriptsPath "CreateStoredProcedures_Task3.sql"
         $searchAutocompleteScript = Join-Path $databaseScriptsPath "CreateSearchCustomersAutocomplete.sql"
+        $submitLoanScript = Join-Path $databaseScriptsPath "sp_SubmitLoanApplication.sql"
+        $evaluateCreditScript = Join-Path $databaseScriptsPath "sp_EvaluateCredit.sql"
+        $processLoanDecisionScript = Join-Path $databaseScriptsPath "sp_ProcessLoanDecision.sql"
+        $calculatePaymentScheduleScript = Join-Path $databaseScriptsPath "sp_CalculatePaymentSchedule.sql"
+        $generatePortfolioReportScript = Join-Path $databaseScriptsPath "sp_GeneratePortfolioReport.sql"
         
         try {
             # Re-run stored procedure scripts (they use IF OBJECT_ID/DROP/CREATE - inherently idempotent)
@@ -301,13 +341,43 @@ try {
             
             Write-DeploymentLog "Autocomplete procedure updated successfully"
             
+            # Run sp_SubmitLoanApplication.sql to update loan submission procedure
+            Write-DeploymentLog "Running sp_SubmitLoanApplication.sql to update loan submission procedure"
+            Invoke-Sqlcmd -ServerInstance $dbHost -Username $dbUsername -Password $dbPassword -Database $dbName -InputFile $submitLoanScript -TrustServerCertificate
+            
+            Write-DeploymentLog "Loan submission procedure updated successfully"
+            
+            # Run sp_EvaluateCredit.sql to update credit evaluation procedure
+            Write-DeploymentLog "Running sp_EvaluateCredit.sql to update credit evaluation procedure"
+            Invoke-Sqlcmd -ServerInstance $dbHost -Username $dbUsername -Password $dbPassword -Database $dbName -InputFile $evaluateCreditScript -TrustServerCertificate
+            
+            Write-DeploymentLog "Credit evaluation procedure updated successfully"
+            
+            # Run sp_ProcessLoanDecision.sql to update loan decision procedure
+            Write-DeploymentLog "Running sp_ProcessLoanDecision.sql to update loan decision procedure"
+            Invoke-Sqlcmd -ServerInstance $dbHost -Username $dbUsername -Password $dbPassword -Database $dbName -InputFile $processLoanDecisionScript -TrustServerCertificate
+            
+            Write-DeploymentLog "Loan decision procedure updated successfully"
+            
+            # Run sp_CalculatePaymentSchedule.sql to update payment schedule procedure
+            Write-DeploymentLog "Running sp_CalculatePaymentSchedule.sql to update payment schedule procedure"
+            Invoke-Sqlcmd -ServerInstance $dbHost -Username $dbUsername -Password $dbPassword -Database $dbName -InputFile $calculatePaymentScheduleScript -TrustServerCertificate
+            
+            Write-DeploymentLog "Payment schedule procedure updated successfully"
+            
+            # Run sp_GeneratePortfolioReport.sql to update portfolio report procedure
+            Write-DeploymentLog "Running sp_GeneratePortfolioReport.sql to update portfolio report procedure"
+            Invoke-Sqlcmd -ServerInstance $dbHost -Username $dbUsername -Password $dbPassword -Database $dbName -InputFile $generatePortfolioReportScript -TrustServerCertificate
+            
+            Write-DeploymentLog "Portfolio report procedure updated successfully"
+            
             # Verify stored procedures exist
             Write-DeploymentLog "Verifying stored procedures..."
-            $verifyProcsQuery = "SELECT name FROM sys.objects WHERE type = 'P' AND name IN ('sp_SearchCustomers', 'sp_GetCustomerById', 'sp_UpdateCustomer', 'sp_CreateCustomer', 'sp_SearchCustomersAutocomplete') ORDER BY name"
+            $verifyProcsQuery = "SELECT name FROM sys.objects WHERE type = 'P' AND name IN ('sp_SearchCustomers', 'sp_GetCustomerById', 'sp_UpdateCustomer', 'sp_CreateCustomer', 'sp_SearchCustomersAutocomplete', 'sp_SubmitLoanApplication', 'sp_EvaluateCredit', 'sp_ProcessLoanDecision', 'sp_CalculatePaymentSchedule', 'sp_GeneratePortfolioReport') ORDER BY name"
             $procs = Invoke-Sqlcmd -ServerInstance $dbHost -Username $dbUsername -Password $dbPassword -Database $dbName -Query $verifyProcsQuery -TrustServerCertificate
             $procCount = ($procs | Measure-Object).Count
-            Write-DeploymentLog "Verified $procCount/5 stored procedures exist"
-            if ($procCount -lt 5) {
+            Write-DeploymentLog "Verified $procCount/10 stored procedures exist"
+            if ($procCount -lt 10) {
                 Write-DeploymentLog "WARNING: Not all stored procedures were created" "WARN"
             }
             

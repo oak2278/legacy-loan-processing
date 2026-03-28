@@ -4,6 +4,10 @@
 -- Requirements: 4.1, 4.3, 4.5
 -- ============================================================================
 
+IF OBJECT_ID('dbo.sp_ProcessLoanDecision', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.sp_ProcessLoanDecision;
+GO
+
 CREATE PROCEDURE [dbo].[sp_ProcessLoanDecision]
     @ApplicationId INT,
     @Decision NVARCHAR(20),

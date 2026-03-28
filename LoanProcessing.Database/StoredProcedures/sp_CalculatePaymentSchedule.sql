@@ -3,6 +3,11 @@
 -- Description: Calculates and generates an amortization payment schedule for an approved loan
 -- Requirements: 4.2, 5.1, 5.2, 5.3, 5.4
 -- =============================================
+
+IF OBJECT_ID('dbo.sp_CalculatePaymentSchedule', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.sp_CalculatePaymentSchedule;
+GO
+
 CREATE PROCEDURE sp_CalculatePaymentSchedule
     @ApplicationId INT
 AS

@@ -39,6 +39,14 @@ phases:
       - echo "Copying database scripts..."
       - xcopy database\*.sql deployment-package\database\ /E /I /Y
       
+      # Copy stored procedure files from LoanProcessing.Database
+      - echo "Copying stored procedure files..."
+      - xcopy LoanProcessing.Database\StoredProcedures\sp_SubmitLoanApplication.sql deployment-package\database\ /Y
+      - xcopy LoanProcessing.Database\StoredProcedures\sp_EvaluateCredit.sql deployment-package\database\ /Y
+      - xcopy LoanProcessing.Database\StoredProcedures\sp_ProcessLoanDecision.sql deployment-package\database\ /Y
+      - xcopy LoanProcessing.Database\StoredProcedures\sp_CalculatePaymentSchedule.sql deployment-package\database\ /Y
+      - xcopy LoanProcessing.Database\StoredProcedures\sp_GeneratePortfolioReport.sql deployment-package\database\ /Y
+      
       # Copy deployment scripts (CodeDeploy lifecycle hooks)
       - echo "Copying deployment scripts..."
       - xcopy aws-deployment\codedeploy\*.ps1 deployment-package\scripts\ /Y

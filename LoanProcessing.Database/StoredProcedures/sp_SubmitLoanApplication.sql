@@ -4,6 +4,10 @@
 -- Requirements: 2.1, 2.2, 2.5
 -- ============================================================================
 
+IF OBJECT_ID('dbo.sp_SubmitLoanApplication', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.sp_SubmitLoanApplication;
+GO
+
 CREATE PROCEDURE [dbo].[sp_SubmitLoanApplication]
     @CustomerId INT,
     @LoanType NVARCHAR(20),

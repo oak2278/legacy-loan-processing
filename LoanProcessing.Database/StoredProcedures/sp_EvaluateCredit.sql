@@ -4,6 +4,10 @@
 -- Requirements: 3.1, 3.2, 3.3, 3.4, 3.5
 -- ============================================================================
 
+IF OBJECT_ID('dbo.sp_EvaluateCredit', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.sp_EvaluateCredit;
+GO
+
 CREATE PROCEDURE [dbo].[sp_EvaluateCredit]
     @ApplicationId INT
 AS
