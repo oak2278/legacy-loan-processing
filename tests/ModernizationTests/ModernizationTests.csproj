@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FsCheck" Version="2.16.6" />
+    <PackageReference Include="FsCheck.Xunit" Version="2.16.6" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+  </ItemGroup>
+
+  <!-- Linked source files from LoanProcessing.Web (cannot reference .NET Framework 4.7.2 project directly) -->
+  <ItemGroup>
+    <Compile Include="..\..\LoanProcessing.Web\Validation\Models\ModernizationStage.cs" Link="Validation\Models\ModernizationStage.cs" />
+    <Compile Include="..\..\LoanProcessing.Web\Validation\Models\TestResult.cs" Link="Validation\Models\TestResult.cs" />
+    <Compile Include="..\..\LoanProcessing.Web\Validation\Models\ValidationRunResult.cs" Link="Validation\Models\ValidationRunResult.cs" />
+    <Compile Include="..\..\LoanProcessing.Web\Validation\StageDetector.cs" Link="Validation\StageDetector.cs" />
+  </ItemGroup>
+
+</Project>

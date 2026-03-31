@@ -32,42 +32,46 @@ This project is intended for:
 - **Database**: Microsoft SQL Server 2016+ (or LocalDB for development)
 - **UI**: Razor views with Bootstrap 3.4.1
 - **JavaScript**: jQuery 3.4.1 for client-side interactions
+- **CI/CD**: AWS CodePipeline + CodeBuild + CodeDeploy
+- **Infrastructure**: Terraform (VPC, EC2, RDS, ALB)
+- **Testing**: FsCheck 2.16.6 (property-based tests), xUnit 2.9.2
 
 ## Project Structure
 
 ```
 LoanProcessing/
 ├── LoanProcessing.sln                    # Visual Studio solution file
+├── buildspec.yml                         # AWS CodeBuild configuration
 ├── LoanProcessing.Web/                   # ASP.NET MVC 5 web application
-│   ├── App_Start/                        # Application startup configuration
-│   │   ├── BundleConfig.cs              # Script and CSS bundling
-│   │   ├── FilterConfig.cs              # Global MVC filters
-│   │   └── RouteConfig.cs               # URL routing configuration
-│   ├── Controllers/                      # MVC controllers (to be added)
-│   ├── Models/                           # Domain models (to be added)
-│   ├── Repositories/                     # Data access layer (to be added)
-│   ├── Services/                         # Business logic layer (to be added)
+│   ├── App_Start/                        # Startup configuration (routing, bundles, filters)
+│   ├── Controllers/                      # MVC controllers (Home, Customer, Loan, Report, InterestRate)
+│   ├── Models/                           # Domain models (Customer, LoanApplication, LoanDecision, etc.)
+│   ├── Data/                             # Repositories (ADO.NET + stored procedure calls)
+│   ├── Services/                         # Business logic layer (CustomerService, LoanService, etc.)
 │   ├── Views/                            # Razor views
-│   │   ├── Shared/
-│   │   │   ├── _Layout.cshtml           # Master layout page
-│   │   │   └── Error.cshtml             # Error page
-│   │   ├── Web.config                   # Views configuration
-│   │   └── _ViewStart.cshtml            # View startup
-│   ├── Content/                          # CSS files
-│   │   ├── bootstrap.css                # Bootstrap 3 styles
-│   │   └── Site.css                     # Custom application styles
-│   ├── Scripts/                          # JavaScript files
-│   │   ├── jquery-3.4.1.js              # jQuery library
-│   │   ├── bootstrap.js                 # Bootstrap JavaScript
-│   │   └── jquery.validate.js           # jQuery validation
+│   │   ├── Shared/_Layout.cshtml         # Master layout
+│   │   └── Validation/Index.cshtml       # Validation dashboard (embedded CSS)
+│   ├── Validation/                       # Modernization validation framework
+│   │   ├── Models/                       # TestResult, ValidationRunResult, ModernizationStage
+│   │   ├── Tests/                        # SmokeTests, DataIntegrityTests, Business logic tests
+│   │   ├── Helpers/                      # DatabaseHelper, TestDataCleanup, BaselineManager
+│   │   ├── StageDetector.cs              # Auto-detects modernization stage
+│   │   ├── ValidationService.cs          # Orchestrates test execution
+│   │   └── ValidationController.cs       # /Validation route (GET + POST)
 │   ├── Web.config                        # Application configuration
-│   ├── packages.config                   # NuGet package references
-│   └── Global.asax.cs                    # Application entry point
-└── LoanProcessing.Database/              # SQL Server database project
-    ├── Tables/                           # Table definitions (to be added)
-    ├── StoredProcedures/                 # Stored procedures (to be added)
-    └── Scripts/                          # Database scripts
-        └── PostDeployment/               # Post-deployment scripts
+│   └── packages.config                   # NuGet package references
+├── LoanProcessing.Database/              # SQL Server database project
+│   ├── StoredProcedures/                 # Stored procedures
+│   └── Scripts/                          # Database setup and migration scripts
+├── aws-deployment/                       # AWS CI/CD infrastructure
+│   ├── appspec.yml                       # CodeDeploy configuration
+│   ├── codedeploy/                       # Deployment lifecycle hooks (PowerShell)
+│   └── terraform/                        # Infrastructure as Code (VPC, EC2, RDS, pipeline)
+├── database/                             # SQL scripts (schema, stored procs, test scripts)
+├── tests/
+│   ├── ModernizationTests/               # Property-based tests for validation framework (FsCheck)
+│   └── WorkshopGuideTests/               # Workshop guide validation tests
+└── docs/                                 # Documentation
 ```
 
 ## Prerequisites
@@ -136,28 +140,70 @@ The following NuGet packages are included:
 
 ### Utility Packages
 - **Newtonsoft.Json** (12.0.2): JSON serialization
+- **Npgsql** (4.1.13): PostgreSQL data provider (for post-migration validation)
 - **Microsoft.AspNet.Web.Optimization** (1.1.3): Bundling and minification
 
 
 ## Deployment
 
-For detailed deployment instructions, see [DEPLOYMENT.md](docs/DEPLOYMENT.md).
+### AWS Deployment (CI/CD Pipeline)
 
-### Quick Start
+The application deploys to AWS via a fully automated CI/CD pipeline:
+
+- **CodePipeline** triggers on push to `main`
+- **CodeBuild** compiles the .NET Framework app and packages artifacts
+- **CodeDeploy** deploys to EC2 instances running IIS behind an ALB
+- **RDS SQL Server** hosts the database with credentials in Secrets Manager
+
+Infrastructure is managed with Terraform in `aws-deployment/terraform/`.
+
+For full details, see:
+- [aws-deployment/README.md](aws-deployment/README.md) — Pipeline architecture and setup
+- [aws-deployment/DEPLOYMENT_GUIDE.md](aws-deployment/DEPLOYMENT_GUIDE.md) — Step-by-step deployment instructions
+
+### Local Development
 
 1. **Create Database**:
    ```powershell
-   sqlcmd -S (localdb)\MSSQLLocalDB -E -i LoanProcessing.Database\Scripts\CreateDatabase.sql
+   sqlcmd -S "(localdb)\MSSQLLocalDB" -E -i database\CreateDatabase.sql
+   sqlcmd -S "(localdb)\MSSQLLocalDB" -E -d LoanProcessing -i database\InitializeSampleData.sql
    ```
 
-2. **Initialize Sample Data**:
-   ```powershell
-   sqlcmd -S (localdb)\MSSQLLocalDB -E -d LoanProcessing -i LoanProcessing.Database\Scripts\InitializeSampleData.sql
-   ```
-
-3. **Build and Run**:
+2. **Build and Run**:
    - Open `LoanProcessing.sln` in Visual Studio
-   - Press F5 to run
+   - Press F5 to run with IIS Express
+   - Navigate to `http://localhost:<port>/`
+
+For more details, see [DEPLOYMENT.md](docs/DEPLOYMENT.md).
+
+## Validation Framework
+
+The application includes a built-in validation framework at the `/Validation` route that verifies functionality across all four modernization stages. Workshop attendees navigate to the page, click "Run All Tests," and see color-coded results inline — no CLI, no separate projects, no configuration.
+
+### What It Tests
+
+- **Smoke Tests** — Verifies all 5 application pages load (Home, Customers, Loans, Reports, Interest Rates)
+- **Data Integrity Tests** — Compares row counts, constraints, and sample records against a pre-modernization baseline
+- **Business Logic Tests** — Exercises customer CRUD, loan submission, credit evaluation, payment schedules, and portfolio reporting through the service layer
+
+### Stage Detection
+
+The framework automatically detects which modernization stage the app is at by inspecting the connection string, .NET runtime version, and container environment variables:
+
+| Stage | Database | Runtime | Hosting |
+|-------|----------|---------|---------|
+| Pre-Modernization | SQL Server | .NET Fx 4.7.2 | IIS/EC2 |
+| Post-Module-1 | Aurora PostgreSQL | .NET Fx 4.7.2 | IIS/EC2 |
+| Post-Module-2 | Aurora PostgreSQL | .NET 8 | Kestrel/EC2 |
+| Post-Module-3 | Aurora PostgreSQL | .NET 8 | Container |
+
+### Development-Time Property Tests
+
+A separate `tests/ModernizationTests/` xUnit project validates the framework itself using FsCheck property-based tests (28 tests). Attendees never touch this project.
+
+```powershell
+dotnet test tests/ModernizationTests/ModernizationTests.csproj
+```
 
 ## Modernization Notes
 
@@ -339,6 +385,8 @@ var result = evaluator.EvaluateCredit(application, customer);
 ### Configuration & Deployment
 - **[APPLICATION_CONFIGURATION.md](docs/APPLICATION_CONFIGURATION.md)**: Configuration guide
 - **[DEPLOYMENT.md](docs/DEPLOYMENT.md)**: Comprehensive deployment guide
+- **[aws-deployment/README.md](aws-deployment/README.md)**: AWS CI/CD pipeline architecture
+- **[aws-deployment/DEPLOYMENT_GUIDE.md](aws-deployment/DEPLOYMENT_GUIDE.md)**: AWS deployment step-by-step
 - **[BUILD_FIXES.md](docs/BUILD_FIXES.md)**: Build issues and fixes
 - **[SECURITY_UPDATE.md](docs/SECURITY_UPDATE.md)**: Security updates applied
 

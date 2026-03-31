@@ -99,6 +99,9 @@
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\packages\Newtonsoft.Json.13.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
+    <Reference Include="Npgsql">
+      <HintPath>..\packages\Npgsql.4.1.13\lib\net461\Npgsql.dll</HintPath>
+    </Reference>
     <Reference Include="WebGrease">
       <Private>True</Private>
       <HintPath>..\packages\WebGrease.1.6.0\lib\WebGrease.dll</HintPath>
@@ -197,6 +200,21 @@
     <Compile Include="Tests\PropertyTestGenerators.cs" />
     <Compile Include="Tests\PropertyTestBase.cs" />
     <Compile Include="Tests\SamplePropertyTests.cs" />
+    <Compile Include="Validation\Models\ModernizationStage.cs" />
+    <Compile Include="Validation\Models\TestResult.cs" />
+    <Compile Include="Validation\Models\ValidationRunResult.cs" />
+    <Compile Include="Validation\IValidationTestCategory.cs" />
+    <Compile Include="Validation\StageDetector.cs" />
+    <Compile Include="Validation\Helpers\DatabaseHelper.cs" />
+    <Compile Include="Validation\Helpers\TestDataCleanup.cs" />
+    <Compile Include="Validation\Helpers\BaselineManager.cs" />
+    <Compile Include="Validation\Tests\SmokeTests.cs" />
+    <Compile Include="Validation\Tests\DataIntegrityTests.cs" />
+    <Compile Include="Validation\Tests\CustomerBusinessTests.cs" />
+    <Compile Include="Validation\Tests\LoanProcessingTests.cs" />
+    <Compile Include="Validation\Tests\CreditEvaluationTests.cs" />
+    <Compile Include="Validation\ValidationService.cs" />
+    <Compile Include="Validation\ValidationController.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -256,6 +274,7 @@
     <Content Include="Views\InterestRate\Index.cshtml" />
     <Content Include="Views\InterestRate\Create.cshtml" />
     <Content Include="Views\InterestRate\Edit.cshtml" />
+    <Content Include="Views\Validation\Index.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
