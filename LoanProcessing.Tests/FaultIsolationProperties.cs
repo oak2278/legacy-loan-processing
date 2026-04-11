@@ -4,6 +4,7 @@ using System.Linq;
 using FsCheck;
 using FsCheck.Xunit;
 using LoanProcessing.Web.Validation.Models;
+using TestResult = LoanProcessing.Web.Validation.Models.TestResult;
 
 namespace LoanProcessing.Tests
 {
