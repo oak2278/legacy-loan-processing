@@ -14,15 +14,17 @@ namespace LoanProcessing.Web.Validation.Tests
         private readonly ICustomerService _customerService;
         private readonly TestDataCleanup _cleanup;
         private readonly CustomerBusinessTests _customerTests;
+        private readonly DatabaseHelper _db;
 
         public string CategoryName { get { return "BusinessLogic"; } }
 
-        public CreditEvaluationTests(ILoanService loanService, ICustomerService customerService, TestDataCleanup cleanup, CustomerBusinessTests customerTests)
+        public CreditEvaluationTests(ILoanService loanService, ICustomerService customerService, TestDataCleanup cleanup, CustomerBusinessTests customerTests, DatabaseHelper databaseHelper = null)
         {
             _loanService = loanService;
             _customerService = customerService;
             _cleanup = cleanup;
             _customerTests = customerTests;
+            _db = databaseHelper;
         }
 
         public List<TestResult> Run(ModernizationStage stage)
@@ -31,6 +33,16 @@ namespace LoanProcessing.Web.Validation.Tests
             results.Add(TestHighCreditScore(stage));
             results.Add(TestLowCreditScore(stage));
             results.Add(TestDebtToIncomeRatio(stage));
+
+            // Boundary tests — verify exact threshold behavior
+            results.Add(TestCreditScoreBoundaries(stage));
+            results.Add(TestRecommendationBoundaries(stage));
+
+            // Shadow test — compare SP vs C# on same input (PreModernization only)
+            if (stage == ModernizationStage.PreModernization && _db != null && !_db.IsPostgreSQL)
+            {
+                results.Add(TestShadowComparison(stage));
+            }
 
             // Final cleanup of all test data
             _cleanup.CleanupBySSNPrefix("999-");
@@ -120,6 +132,216 @@ namespace LoanProcessing.Web.Validation.Tests
                 return new TestResult { TestName = "Debt-to-Income Ratio Calculation", Category = CategoryName, Description = "Evaluates credit for a customer with an existing approved loan and verifies the debt-to-income ratio is calculated and included in the decision", Passed = passed, Expected = "DebtToIncomeRatio > 0", Actual = "DebtToIncomeRatio = " + decision.DebtToIncomeRatio.Value, WhatToCheck = passed ? string.Empty : GetHint(stage), Duration = sw.Elapsed };
             }
             catch (Exception ex) { sw.Stop(); return Fail(sw, "Debt-to-Income Ratio Calculation", "Evaluates credit with existing loans", "DebtToIncomeRatio > 0", "Exception: " + ex.Message, stage); }
+        }
+
+        private TestResult TestCreditScoreBoundaries(ModernizationStage stage)
+        {
+            var sw = Stopwatch.StartNew();
+            try
+            {
+                // Test exact boundary values for credit score component
+                var issues = new List<string>();
+
+                // 750 boundary: should yield component 10
+                if (CreditEvaluationCalculator.CalculateCreditScoreComponent(750) != 10)
+                    issues.Add("CreditScore=750 expected component 10, got " + CreditEvaluationCalculator.CalculateCreditScoreComponent(750));
+                if (CreditEvaluationCalculator.CalculateCreditScoreComponent(749) != 20)
+                    issues.Add("CreditScore=749 expected component 20, got " + CreditEvaluationCalculator.CalculateCreditScoreComponent(749));
+
+                // 700 boundary
+                if (CreditEvaluationCalculator.CalculateCreditScoreComponent(700) != 20)
+                    issues.Add("CreditScore=700 expected component 20, got " + CreditEvaluationCalculator.CalculateCreditScoreComponent(700));
+                if (CreditEvaluationCalculator.CalculateCreditScoreComponent(699) != 35)
+                    issues.Add("CreditScore=699 expected component 35, got " + CreditEvaluationCalculator.CalculateCreditScoreComponent(699));
+
+                // 650 boundary
+                if (CreditEvaluationCalculator.CalculateCreditScoreComponent(650) != 35)
+                    issues.Add("CreditScore=650 expected component 35, got " + CreditEvaluationCalculator.CalculateCreditScoreComponent(650));
+                if (CreditEvaluationCalculator.CalculateCreditScoreComponent(649) != 50)
+                    issues.Add("CreditScore=649 expected component 50, got " + CreditEvaluationCalculator.CalculateCreditScoreComponent(649));
+
+                // 600 boundary
+                if (CreditEvaluationCalculator.CalculateCreditScoreComponent(600) != 50)
+                    issues.Add("CreditScore=600 expected component 50, got " + CreditEvaluationCalculator.CalculateCreditScoreComponent(600));
+                if (CreditEvaluationCalculator.CalculateCreditScoreComponent(599) != 75)
+                    issues.Add("CreditScore=599 expected component 75, got " + CreditEvaluationCalculator.CalculateCreditScoreComponent(599));
+
+                // DTI boundaries
+                if (CreditEvaluationCalculator.CalculateDtiComponent(20.00m) != 0)
+                    issues.Add("DTI=20.00 expected component 0, got " + CreditEvaluationCalculator.CalculateDtiComponent(20.00m));
+                if (CreditEvaluationCalculator.CalculateDtiComponent(20.01m) != 10)
+                    issues.Add("DTI=20.01 expected component 10, got " + CreditEvaluationCalculator.CalculateDtiComponent(20.01m));
+                if (CreditEvaluationCalculator.CalculateDtiComponent(35.00m) != 10)
+                    issues.Add("DTI=35.00 expected component 10, got " + CreditEvaluationCalculator.CalculateDtiComponent(35.00m));
+                if (CreditEvaluationCalculator.CalculateDtiComponent(35.01m) != 20)
+                    issues.Add("DTI=35.01 expected component 20, got " + CreditEvaluationCalculator.CalculateDtiComponent(35.01m));
+                if (CreditEvaluationCalculator.CalculateDtiComponent(43.00m) != 20)
+                    issues.Add("DTI=43.00 expected component 20, got " + CreditEvaluationCalculator.CalculateDtiComponent(43.00m));
+                if (CreditEvaluationCalculator.CalculateDtiComponent(43.01m) != 30)
+                    issues.Add("DTI=43.01 expected component 30, got " + CreditEvaluationCalculator.CalculateDtiComponent(43.01m));
+
+                sw.Stop();
+                bool passed = issues.Count == 0;
+                return new TestResult
+                {
+                    TestName = "Credit Score & DTI Boundary Values",
+                    Category = CategoryName,
+                    Description = "Tests exact boundary values for credit score brackets (750/749, 700/699, 650/649, 600/599) and DTI brackets (20.00/20.01, 35.00/35.01, 43.00/43.01) to verify threshold behavior",
+                    Passed = passed,
+                    Expected = "All 14 boundary checks pass",
+                    Actual = passed ? "All 14 boundary checks pass" : string.Join("; ", issues),
+                    WhatToCheck = passed ? string.Empty : GetHint(stage),
+                    Duration = sw.Elapsed
+                };
+            }
+            catch (Exception ex) { sw.Stop(); return Fail(sw, "Credit Score & DTI Boundary Values", "Tests boundary values for scoring brackets", "All boundaries correct", "Exception: " + ex.Message, stage); }
+        }
+
+        private TestResult TestRecommendationBoundaries(ModernizationStage stage)
+        {
+            var sw = Stopwatch.StartNew();
+            try
+            {
+                var issues = new List<string>();
+
+                // Approval boundary: RiskScore=30, DTI=35 → Approved
+                string rec = CreditEvaluationCalculator.DetermineRecommendation(30, 35.00m);
+                if (rec != "Recommended for Approval")
+                    issues.Add("RiskScore=30,DTI=35.00 expected 'Recommended for Approval', got '" + rec + "'");
+
+                // Just over approval → Manual Review: RiskScore=31, DTI=35
+                rec = CreditEvaluationCalculator.DetermineRecommendation(31, 35.00m);
+                if (rec != "Manual Review Required")
+                    issues.Add("RiskScore=31,DTI=35.00 expected 'Manual Review Required', got '" + rec + "'");
+
+                // Approval DTI boundary: RiskScore=30, DTI=35.01 → Manual Review
+                rec = CreditEvaluationCalculator.DetermineRecommendation(30, 35.01m);
+                if (rec != "Manual Review Required")
+                    issues.Add("RiskScore=30,DTI=35.01 expected 'Manual Review Required', got '" + rec + "'");
+
+                // Manual Review boundary: RiskScore=50, DTI=43 → Manual Review
+                rec = CreditEvaluationCalculator.DetermineRecommendation(50, 43.00m);
+                if (rec != "Manual Review Required")
+                    issues.Add("RiskScore=50,DTI=43.00 expected 'Manual Review Required', got '" + rec + "'");
+
+                // Just over Manual Review → Rejection: RiskScore=51, DTI=43
+                rec = CreditEvaluationCalculator.DetermineRecommendation(51, 43.00m);
+                if (rec != "High Risk - Recommend Rejection")
+                    issues.Add("RiskScore=51,DTI=43.00 expected 'High Risk - Recommend Rejection', got '" + rec + "'");
+
+                // Manual Review DTI boundary: RiskScore=50, DTI=43.01 → Rejection
+                rec = CreditEvaluationCalculator.DetermineRecommendation(50, 43.01m);
+                if (rec != "High Risk - Recommend Rejection")
+                    issues.Add("RiskScore=50,DTI=43.01 expected 'High Risk - Recommend Rejection', got '" + rec + "'");
+
+                sw.Stop();
+                bool passed = issues.Count == 0;
+                return new TestResult
+                {
+                    TestName = "Recommendation Threshold Boundaries",
+                    Category = CategoryName,
+                    Description = "Tests exact boundary values for recommendation classification: Approval (RiskScore≤30 AND DTI≤35), Manual Review (RiskScore≤50 AND DTI≤43), and Rejection thresholds",
+                    Passed = passed,
+                    Expected = "All 6 recommendation boundary checks pass",
+                    Actual = passed ? "All 6 recommendation boundary checks pass" : string.Join("; ", issues),
+                    WhatToCheck = passed ? string.Empty : GetHint(stage),
+                    Duration = sw.Elapsed
+                };
+            }
+            catch (Exception ex) { sw.Stop(); return Fail(sw, "Recommendation Threshold Boundaries", "Tests recommendation boundary values", "All boundaries correct", "Exception: " + ex.Message, stage); }
+        }
+
+        private TestResult TestShadowComparison(ModernizationStage stage)
+        {
+            var sw = Stopwatch.StartNew();
+            try
+            {
+                int customerId = _customerTests.LastCreatedCustomerId;
+                if (customerId <= 0) return Fail(sw, "Shadow: SP vs Service Comparison", "Compares stored procedure and service outputs", "Test customer exists", "Create Customer test must pass first", stage);
+
+                // Set a known credit score for deterministic comparison
+                UpdateCustomerScore(customerId, 720, 90000m);
+
+                // Submit a fresh application
+                var app = new LoanApplication { CustomerId = customerId, LoanType = "Personal", RequestedAmount = 20000m, TermMonths = 36, Purpose = "Validation - shadow comparison" };
+                int appId = _loanService.SubmitLoanApplication(app);
+
+                // Step 1: Call sp_EvaluateCredit directly via ADO.NET
+                LoanDecision spResult = null;
+                using (var connection = new System.Data.SqlClient.SqlConnection(_db.IsPostgreSQL ? null : GetConnectionString()))
+                {
+                    connection.Open();
+                    using (var command = new System.Data.SqlClient.SqlCommand("sp_EvaluateCredit", connection))
+                    {
+                        command.CommandType = System.Data.CommandType.StoredProcedure;
+                        command.Parameters.AddWithValue("@ApplicationId", appId);
+                        using (var reader = command.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                spResult = new LoanDecision
+                                {
+                                    ApplicationId = reader.GetInt32(reader.GetOrdinal("ApplicationId")),
+                                    RiskScore = reader.IsDBNull(reader.GetOrdinal("RiskScore")) ? (int?)null : reader.GetInt32(reader.GetOrdinal("RiskScore")),
+                                    DebtToIncomeRatio = reader.IsDBNull(reader.GetOrdinal("DebtToIncomeRatio")) ? (decimal?)null : reader.GetDecimal(reader.GetOrdinal("DebtToIncomeRatio")),
+                                    InterestRate = reader.IsDBNull(reader.GetOrdinal("InterestRate")) ? (decimal?)null : reader.GetDecimal(reader.GetOrdinal("InterestRate")),
+                                    Comments = reader.GetString(reader.GetOrdinal("Recommendation"))
+                                };
+                            }
+                        }
+                    }
+
+                    // Step 2: Reset application state so the service sees the same starting point
+                    using (var resetCmd = new System.Data.SqlClient.SqlCommand(
+                        "UPDATE LoanApplications SET Status = 'Pending', InterestRate = NULL WHERE ApplicationId = @AppId", connection))
+                    {
+                        resetCmd.Parameters.AddWithValue("@AppId", appId);
+                        resetCmd.ExecuteNonQuery();
+                    }
+                }
+
+                // Step 3: Call CreditEvaluationService via the normal service path
+                LoanDecision svcResult = _loanService.EvaluateCredit(appId);
+
+                sw.Stop();
+
+                if (spResult == null)
+                    return Fail(sw, "Shadow: SP vs Service Comparison", "Compares stored procedure and service outputs on identical input", "SP returns result", "SP returned null", stage);
+
+                // Step 4: Compare outputs
+                var mismatches = new List<string>();
+                if (spResult.RiskScore != svcResult.RiskScore)
+                    mismatches.Add("RiskScore: SP=" + spResult.RiskScore + " vs Svc=" + svcResult.RiskScore);
+                if (spResult.DebtToIncomeRatio != svcResult.DebtToIncomeRatio)
+                    mismatches.Add("DTI: SP=" + spResult.DebtToIncomeRatio + " vs Svc=" + svcResult.DebtToIncomeRatio);
+                if (spResult.InterestRate != svcResult.InterestRate)
+                    mismatches.Add("Rate: SP=" + spResult.InterestRate + " vs Svc=" + svcResult.InterestRate);
+                if (spResult.Comments != svcResult.Comments)
+                    mismatches.Add("Recommendation: SP='" + spResult.Comments + "' vs Svc='" + svcResult.Comments + "'");
+
+                bool passed = mismatches.Count == 0;
+                string actual = passed
+                    ? "RiskScore=" + svcResult.RiskScore + ", DTI=" + svcResult.DebtToIncomeRatio + ", Rate=" + svcResult.InterestRate + ", Rec='" + svcResult.Comments + "'"
+                    : string.Join("; ", mismatches);
+
+                return new TestResult
+                {
+                    TestName = "Shadow: SP vs Service Comparison",
+                    Category = CategoryName,
+                    Description = "Runs both sp_EvaluateCredit and CreditEvaluationService on the same loan application and compares RiskScore, DTI, InterestRate, and Recommendation to prove behavioral equivalence",
+                    Passed = passed,
+                    Expected = "SP and Service produce identical outputs",
+                    Actual = actual,
+                    WhatToCheck = passed ? string.Empty : "The stored procedure and C# service produced different results for the same input. Check the extraction logic in CreditEvaluationCalculator and CreditEvaluationService.",
+                    Duration = sw.Elapsed
+                };
+            }
+            catch (Exception ex) { sw.Stop(); return Fail(sw, "Shadow: SP vs Service Comparison", "Compares stored procedure and service outputs", "Both paths produce identical results", "Exception: " + ex.Message, stage); }
+        }
+
+        private string GetConnectionString()
+        {
+            return System.Configuration.ConfigurationManager.ConnectionStrings["LoanProcessingConnection"].ConnectionString;
         }
 
         private TestResult Fail(Stopwatch sw, string name, string desc, string expected, string actual, ModernizationStage stage)
