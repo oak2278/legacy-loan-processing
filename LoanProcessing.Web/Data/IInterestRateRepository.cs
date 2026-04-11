@@ -40,5 +40,7 @@ namespace LoanProcessing.Web.Data
         /// </summary>
         /// <param name="rate">The interest rate to update.</param>
         void UpdateRate(InterestRate rate);
+
+        InterestRate GetRateByCriteria(string loanType, int creditScore, int termMonths, DateTime asOfDate);
     }
 }

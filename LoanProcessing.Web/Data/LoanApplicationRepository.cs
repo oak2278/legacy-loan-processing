@@ -218,6 +218,35 @@ namespace LoanProcessing.Web.Data
         /// </summary>
         /// <param name="reader">The SqlDataReader positioned at a loan application row.</param>
         /// <returns>A LoanApplication object populated from the reader.</returns>
+        public decimal GetApprovedAmountsByCustomer(int customerId, int excludeApplicationId)
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(@"
+                SELECT ISNULL(SUM(ApprovedAmount), 0) FROM LoanApplications
+                WHERE CustomerId = @CustomerId AND Status = 'Approved' AND ApplicationId != @ExcludeApplicationId", connection))
+            {
+                command.Parameters.AddWithValue("@CustomerId", customerId);
+                command.Parameters.AddWithValue("@ExcludeApplicationId", excludeApplicationId);
+                connection.Open();
+                return (decimal)command.ExecuteScalar();
+            }
+        }
+
+        public void UpdateStatusAndRate(int applicationId, string status, decimal interestRate)
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(@"
+                UPDATE LoanApplications SET Status = @Status, InterestRate = @InterestRate
+                WHERE ApplicationId = @ApplicationId", connection))
+            {
+                command.Parameters.AddWithValue("@ApplicationId", applicationId);
+                command.Parameters.AddWithValue("@Status", status);
+                command.Parameters.AddWithValue("@InterestRate", interestRate);
+                connection.Open();
+                command.ExecuteNonQuery();
+            }
+        }
+
         private LoanApplication MapLoanApplicationFromReader(SqlDataReader reader)
         {
             return new LoanApplication

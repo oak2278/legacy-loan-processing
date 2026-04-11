@@ -1,61 +1,61 @@
-using System.Configuration;
-using System.Data;
-using System.Data.SqlClient;
+using System;
+using LoanProcessing.Web.Data;
 using LoanProcessing.Web.Models;
 
 namespace LoanProcessing.Web.Services
 {
-    /// <summary>
-    /// Credit evaluation service.
-    /// Pre-extraction stub: delegates to sp_EvaluateCredit via SqlCommand.
-    /// This will be replaced with C# calculator + repository logic during extraction.
-    /// </summary>
     public class CreditEvaluationService : ICreditEvaluationService
     {
-        private readonly string _connectionString;
+        private readonly ILoanApplicationRepository _loanAppRepo;
+        private readonly ICustomerRepository _customerRepo;
+        private readonly IInterestRateRepository _rateRepo;
 
-        public CreditEvaluationService(string connectionString)
+        public CreditEvaluationService(
+            ILoanApplicationRepository loanAppRepo,
+            ICustomerRepository customerRepo,
+            IInterestRateRepository rateRepo)
         {
-            _connectionString = connectionString;
-        }
-
-        public CreditEvaluationService()
-        {
-            _connectionString = ConfigurationManager.ConnectionStrings["LoanProcessingConnection"].ConnectionString;
+            _loanAppRepo = loanAppRepo;
+            _customerRepo = customerRepo;
+            _rateRepo = rateRepo;
         }
 
         public LoanDecision Evaluate(int applicationId)
         {
-            using (var connection = new SqlConnection(_connectionString))
-            using (var command = new SqlCommand("sp_EvaluateCredit", connection))
+            if (applicationId <= 0)
+                throw new ArgumentException("Application ID must be greater than zero.", "applicationId");
+
+            var application = _loanAppRepo.GetById(applicationId);
+            if (application == null)
+                throw new InvalidOperationException(
+                    string.Format("Loan application with ID {0} was not found.", applicationId));
+
+            var customer = _customerRepo.GetById(application.CustomerId);
+            if (customer == null)
+                throw new InvalidOperationException(
+                    string.Format("Customer for application {0} was not found.", applicationId));
+
+            if (customer.AnnualIncome <= 0)
+                throw new InvalidOperationException("Customer annual income must be greater than zero for credit evaluation.");
+
+            var existingDebt = _loanAppRepo.GetApprovedAmountsByCustomer(application.CustomerId, applicationId);
+            var dtiRatio = CreditEvaluationCalculator.CalculateDtiRatio(existingDebt, application.RequestedAmount, customer.AnnualIncome);
+            var riskScore = CreditEvaluationCalculator.CalculateRiskScore(customer.CreditScore, dtiRatio);
+            var recommendation = CreditEvaluationCalculator.DetermineRecommendation(riskScore, dtiRatio);
+
+            var rateResult = _rateRepo.GetRateByCriteria(application.LoanType, customer.CreditScore, application.TermMonths, DateTime.Now);
+            var interestRate = rateResult != null ? rateResult.Rate : CreditEvaluationCalculator.DefaultInterestRate;
+
+            _loanAppRepo.UpdateStatusAndRate(applicationId, "UnderReview", interestRate);
+
+            return new LoanDecision
             {
-                command.CommandType = CommandType.StoredProcedure;
-                command.Parameters.AddWithValue("@ApplicationId", applicationId);
-
-                connection.Open();
-                using (var reader = command.ExecuteReader())
-                {
-                    if (reader.Read())
-                    {
-                        return new LoanDecision
-                        {
-                            ApplicationId = reader.GetInt32(reader.GetOrdinal("ApplicationId")),
-                            RiskScore = reader.IsDBNull(reader.GetOrdinal("RiskScore"))
-                                ? (int?)null
-                                : reader.GetInt32(reader.GetOrdinal("RiskScore")),
-                            DebtToIncomeRatio = reader.IsDBNull(reader.GetOrdinal("DebtToIncomeRatio"))
-                                ? (decimal?)null
-                                : reader.GetDecimal(reader.GetOrdinal("DebtToIncomeRatio")),
-                            InterestRate = reader.IsDBNull(reader.GetOrdinal("InterestRate"))
-                                ? (decimal?)null
-                                : reader.GetDecimal(reader.GetOrdinal("InterestRate")),
-                            Comments = reader.GetString(reader.GetOrdinal("Recommendation"))
-                        };
-                    }
-                }
-            }
-
-            return null;
+                ApplicationId = applicationId,
+                RiskScore = riskScore,
+                DebtToIncomeRatio = dtiRatio,
+                InterestRate = interestRate,
+                Comments = recommendation
+            };
         }
     }
 }

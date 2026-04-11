@@ -67,7 +67,7 @@ namespace LoanProcessing.Web.Validation.Tests
             _cleanup = cleanup;
             _customerTests = customerTests;
             _db = databaseHelper;
-            _creditEvalService = creditEvalService ?? new CreditEvaluationService();
+            _creditEvalService = creditEvalService;
         }
 
         public List<TestResult> Run(ModernizationStage stage)
@@ -79,8 +79,8 @@ namespace LoanProcessing.Web.Validation.Tests
             results.Add(TestDebtToIncomeRatio(stage));
 
             // Boundary tests — enabled post-extraction when CreditEvaluationCalculator exists
-            // results.Add(TestCreditScoreBoundaries(stage));
-            // results.Add(TestRecommendationBoundaries(stage));
+            results.Add(TestCreditScoreBoundaries(stage));
+            results.Add(TestRecommendationBoundaries(stage));
 
             // Shadow tests — compare SP vs C# on same input (PreModernization only)
             if (stage == ModernizationStage.PreModernization && _db != null && !_db.IsPostgreSQL)
@@ -178,10 +178,65 @@ namespace LoanProcessing.Web.Validation.Tests
             catch (Exception ex) { sw.Stop(); return Fail(sw, "Debt-to-Income Ratio Calculation", "Evaluates credit with existing loans", "DebtToIncomeRatio > 0", "Exception: " + ex.Message, stage); }
         }
 
-        /* Boundary tests — commented out until CreditEvaluationCalculator is built during extraction
-        private TestResult TestCreditScoreBoundaries(ModernizationStage stage) { ... }
-        private TestResult TestRecommendationBoundaries(ModernizationStage stage) { ... }
-        */
+        private TestResult TestCreditScoreBoundaries(ModernizationStage stage)
+        {
+            var sw = Stopwatch.StartNew();
+            try
+            {
+                var failures = new List<string>();
+                var scoreCases = new[] {
+                    new { Score = 750, Expected = 10 }, new { Score = 749, Expected = 20 },
+                    new { Score = 700, Expected = 20 }, new { Score = 699, Expected = 35 },
+                    new { Score = 650, Expected = 35 }, new { Score = 649, Expected = 50 },
+                    new { Score = 600, Expected = 50 }, new { Score = 599, Expected = 75 }
+                };
+                foreach (var c in scoreCases)
+                {
+                    int actual = CreditEvaluationCalculator.CalculateCreditScoreComponent(c.Score);
+                    if (actual != c.Expected) failures.Add("Score " + c.Score + ": expected " + c.Expected + " got " + actual);
+                }
+                var dtiCases = new[] {
+                    new { Dti = 20m, Expected = 0 }, new { Dti = 20.0001m, Expected = 10 },
+                    new { Dti = 35m, Expected = 10 }, new { Dti = 35.0001m, Expected = 20 },
+                    new { Dti = 43m, Expected = 20 }, new { Dti = 43.0001m, Expected = 30 }
+                };
+                foreach (var c in dtiCases)
+                {
+                    int actual = CreditEvaluationCalculator.CalculateDtiComponent(c.Dti);
+                    if (actual != c.Expected) failures.Add("DTI " + c.Dti + ": expected " + c.Expected + " got " + actual);
+                }
+                sw.Stop();
+                bool passed = failures.Count == 0;
+                return new TestResult { TestName = "Credit Score & DTI Boundary Values", Category = CategoryName, Description = "Tests exact bracket thresholds for credit score and DTI components", Passed = passed, Expected = "All boundary values map to correct brackets", Actual = passed ? "All 14 boundary cases passed" : string.Join("; ", failures), WhatToCheck = passed ? string.Empty : "Check CreditEvaluationCalculator bracket thresholds", Duration = sw.Elapsed };
+            }
+            catch (Exception ex) { sw.Stop(); return Fail(sw, "Credit Score & DTI Boundary Values", "Tests bracket boundaries", "All boundaries correct", "Exception: " + ex.Message, stage); }
+        }
+
+        private TestResult TestRecommendationBoundaries(ModernizationStage stage)
+        {
+            var sw = Stopwatch.StartNew();
+            try
+            {
+                var failures = new List<string>();
+                var cases = new[] {
+                    new { Risk = 30, Dti = 35m, Expected = "Recommended for Approval" },
+                    new { Risk = 31, Dti = 35m, Expected = "Manual Review Required" },
+                    new { Risk = 30, Dti = 35.01m, Expected = "Manual Review Required" },
+                    new { Risk = 50, Dti = 43m, Expected = "Manual Review Required" },
+                    new { Risk = 51, Dti = 43m, Expected = "High Risk - Recommend Rejection" },
+                    new { Risk = 50, Dti = 43.01m, Expected = "High Risk - Recommend Rejection" }
+                };
+                foreach (var c in cases)
+                {
+                    string actual = CreditEvaluationCalculator.DetermineRecommendation(c.Risk, c.Dti);
+                    if (actual != c.Expected) failures.Add("Risk=" + c.Risk + ",DTI=" + c.Dti + ": expected '" + c.Expected + "' got '" + actual + "'");
+                }
+                sw.Stop();
+                bool passed = failures.Count == 0;
+                return new TestResult { TestName = "Recommendation Threshold Boundaries", Category = CategoryName, Description = "Tests recommendation classification at exact boundary values", Passed = passed, Expected = "All boundary values produce correct recommendations", Actual = passed ? "All 6 boundary cases passed" : string.Join("; ", failures), WhatToCheck = passed ? string.Empty : "Check CreditEvaluationCalculator.DetermineRecommendation thresholds", Duration = sw.Elapsed };
+            }
+            catch (Exception ex) { sw.Stop(); return Fail(sw, "Recommendation Threshold Boundaries", "Tests recommendation boundaries", "All boundaries correct", "Exception: " + ex.Message, stage); }
+        }
 
         private List<TestResult> RunAllShadowComparisons(ModernizationStage stage)
         {

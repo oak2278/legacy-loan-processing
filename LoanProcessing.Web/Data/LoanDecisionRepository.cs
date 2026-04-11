@@ -4,82 +4,40 @@ using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
 using LoanProcessing.Web.Models;
+using LoanProcessing.Web.Services;
 
 namespace LoanProcessing.Web.Data
 {
-    /// <summary>
-    /// Repository implementation for loan decision data access using ADO.NET and stored procedures.
-    /// Demonstrates legacy pattern with manual parameter mapping and result set handling.
-    /// </summary>
     public class LoanDecisionRepository : ILoanDecisionRepository
     {
         private readonly string _connectionString;
+        private readonly ICreditEvaluationService _creditEvalService;
 
-        /// <summary>
-        /// Initializes a new instance of the LoanDecisionRepository class.
-        /// </summary>
-        /// <param name="connectionString">The database connection string.</param>
-        public LoanDecisionRepository(string connectionString)
+        public LoanDecisionRepository(string connectionString, ICreditEvaluationService creditEvalService)
         {
             if (string.IsNullOrWhiteSpace(connectionString))
-            {
                 throw new ArgumentNullException(nameof(connectionString));
-            }
-
             _connectionString = connectionString;
+            _creditEvalService = creditEvalService;
         }
 
-        /// <summary>
-        /// Initializes a new instance of the LoanDecisionRepository class using the default connection string.
-        /// </summary>
+        public LoanDecisionRepository(string connectionString)
+            : this(connectionString,
+                  new CreditEvaluationService(
+                      new LoanApplicationRepository(connectionString),
+                      new CustomerRepository(connectionString),
+                      new InterestRateRepository(connectionString)))
+        {
+        }
+
         public LoanDecisionRepository()
             : this(ConfigurationManager.ConnectionStrings["LoanProcessingConnection"].ConnectionString)
         {
         }
 
-        /// <summary>
-        /// Performs credit evaluation for a loan application.
-        /// Calls sp_EvaluateCredit stored procedure which calculates risk score,
-        /// debt-to-income ratio, and determines appropriate interest rate.
-        /// </summary>
-        /// <param name="applicationId">The application ID to evaluate.</param>
-        /// <returns>A LoanDecision object containing evaluation results.</returns>
-        /// <exception cref="SqlException">Thrown when database operation fails.</exception>
         public LoanDecision EvaluateCredit(int applicationId)
         {
-            using (var connection = new SqlConnection(_connectionString))
-            using (var command = new SqlCommand("sp_EvaluateCredit", connection))
-            {
-                command.CommandType = CommandType.StoredProcedure;
-                command.Parameters.AddWithValue("@ApplicationId", applicationId);
-
-                connection.Open();
-                using (var reader = command.ExecuteReader())
-                {
-                    if (reader.Read())
-                    {
-                        // Map the evaluation results to a LoanDecision object
-                        // Note: This is not a persisted decision yet, just evaluation results
-                        return new LoanDecision
-                        {
-                            ApplicationId = reader.GetInt32(reader.GetOrdinal("ApplicationId")),
-                            RiskScore = reader.IsDBNull(reader.GetOrdinal("RiskScore"))
-                                ? (int?)null
-                                : reader.GetInt32(reader.GetOrdinal("RiskScore")),
-                            DebtToIncomeRatio = reader.IsDBNull(reader.GetOrdinal("DebtToIncomeRatio"))
-                                ? (decimal?)null
-                                : reader.GetDecimal(reader.GetOrdinal("DebtToIncomeRatio")),
-                            InterestRate = reader.IsDBNull(reader.GetOrdinal("InterestRate"))
-                                ? (decimal?)null
-                                : reader.GetDecimal(reader.GetOrdinal("InterestRate")),
-                            // Store recommendation in Comments field for display purposes
-                            Comments = reader.GetString(reader.GetOrdinal("Recommendation"))
-                        };
-                    }
-                }
-            }
-
-            return null;
+            return _creditEvalService.Evaluate(applicationId);
         }
 
         /// <summary>

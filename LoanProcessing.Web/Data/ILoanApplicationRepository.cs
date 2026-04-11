@@ -36,5 +36,9 @@ namespace LoanProcessing.Web.Data
         /// <param name="customerId">The customer ID to retrieve applications for.</param>
         /// <returns>A collection of loan applications for the customer.</returns>
         IEnumerable<LoanApplication> GetByCustomer(int customerId);
+
+        decimal GetApprovedAmountsByCustomer(int customerId, int excludeApplicationId);
+
+        void UpdateStatusAndRate(int applicationId, string status, decimal interestRate);
     }
 }
