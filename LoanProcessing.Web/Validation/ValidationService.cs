@@ -73,7 +73,7 @@ namespace LoanProcessing.Web.Validation
             _dataIntegrityTests = new DataIntegrityTests(_databaseHelper, baseline);
             _customerBusinessTests = new CustomerBusinessTests(customerService, _cleanup);
             _loanProcessingTests = new LoanProcessingTests(loanService, reportService, _customerBusinessTests);
-            _creditEvaluationTests = new CreditEvaluationTests(loanService, customerService, _cleanup, _customerBusinessTests, _databaseHelper, new CreditEvaluationService());
+            _creditEvaluationTests = new CreditEvaluationTests(loanService, customerService, _cleanup, _customerBusinessTests, _databaseHelper, new CreditEvaluationService(loanAppRepo, customerRepo, new InterestRateRepository(connectionString)));
         }
 
         /// <summary>
@@ -245,7 +245,10 @@ namespace LoanProcessing.Web.Validation
             switch (stage)
             {
                 case ModernizationStage.PreModernization:
-                    return "Pre-Modernization (.NET Framework 4.7.2 + SQL Server)";
+                    bool spExtracted = Type.GetType("LoanProcessing.Web.Services.CreditEvaluationCalculator, LoanProcessing.Web") != null;
+                    return spExtracted
+                        ? "Post-SP-Extraction (.NET Framework 4.7.2 + SQL Server — SPs Extracted)"
+                        : "Pre-Modernization (.NET Framework 4.7.2 + SQL Server)";
                 case ModernizationStage.PostModule1:
                     return "Post-Module-1 (Aurora PostgreSQL)";
                 case ModernizationStage.PostModule2:

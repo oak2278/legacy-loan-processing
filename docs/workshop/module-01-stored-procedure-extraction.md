@@ -236,7 +236,11 @@ Navigate to `/validation` and click "Run All Tests."
 
 > **Tip:** After CodeDeploy completes, wait a few seconds and refresh the page before running tests. The ALB may briefly serve the previous version during the deployment transition.
 
-All tests should pass with green status. The key tests to verify:
+All tests should pass with green status. First, verify the stage label at the top of the results:
+
+- **Stage:** Should now show **"Post-SP-Extraction (.NET Framework 4.7.2 + SQL Server — SPs Extracted)"** instead of "Pre-Modernization." This confirms the validation framework detected that business logic has been extracted from stored procedures into the C# service layer.
+
+The key tests to verify:
 
 - **High Credit Score Risk Assessment** — credit score 780, expects RiskScore ≤ 40
 - **Low Credit Score Risk Assessment** — credit score 550, expects RiskScore > 60
