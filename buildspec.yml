@@ -17,14 +17,14 @@ phases:
       - echo "Building solution in Release configuration..."
       - msbuild LoanProcessing.Web\LoanProcessing.Web.csproj /p:Configuration=Release /p:Platform="AnyCPU" /p:DeployOnBuild=false /v:minimal
       - echo "Checking for test project..."
-      - if (Test-Path "LoanProcessing.Tests\LoanProcessing.Tests.csproj") { echo "Building test project..."; nuget restore LoanProcessing.Tests\LoanProcessing.Tests.csproj -PackagesDirectory packages; msbuild LoanProcessing.Tests\LoanProcessing.Tests.csproj /p:Configuration=Release /p:Platform="AnyCPU" /v:minimal; $env:RUN_PBT = "true" } else { echo "Test project not found - PBT tests will be skipped"; $env:RUN_PBT = "false" }
+      - if (Test-Path "LoanProcessing.Tests\LoanProcessing.Tests.csproj") { echo "Building test project..."; nuget restore LoanProcessing.Tests\LoanProcessing.Tests.csproj -PackagesDirectory packages; msbuild LoanProcessing.Tests\LoanProcessing.Tests.csproj /p:Configuration=Release /p:Platform="AnyCPU" /v:minimal; Set-Content -Path .run_pbt -Value "true" } else { echo "Test project not found - PBT tests will be skipped" }
       
   post_build:
     commands:
       - echo "Running FsCheck property-based tests..."
       - $testResult = 0
       - |
-        if ($env:RUN_PBT -eq "true") {
+        if (Test-Path '.run_pbt') {
           try {
             $output = & packages\xunit.runner.console.2.4.2\tools\net472\xunit.console.exe LoanProcessing.Tests\bin\Release\LoanProcessing.Tests.dll -xml test-results.xml 2>&1
             $testResult = $LASTEXITCODE
