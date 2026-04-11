@@ -192,7 +192,7 @@ namespace LoanProcessing.Web.Services
 **Namespace:** `LoanProcessing.Web.Services`
 **File:** `LoanProcessing.Web/Services/CreditEvaluationCalculator.cs`
 
-Does not exist yet — this is the primary deliverable of the extraction. Pure functions with no dependencies — the primary target for property-based testing. A reference implementation is available in `solutions/CreditEvaluationCalculator.cs`.
+Does not exist yet — this is the primary deliverable of the extraction. Pure functions with no dependencies — the primary target for property-based testing.
 
 ```csharp
 namespace LoanProcessing.Web.Services
@@ -555,7 +555,7 @@ public Property DtiRatio_MatchesFormula() { ... }
 
 ### Test Organization
 
-The `LoanProcessing.Tests` project does not exist yet — it will be created as part of this extraction. A reference implementation is available in `solutions/LoanProcessing.Tests/`.
+The `LoanProcessing.Tests` project does not exist yet — it will be created as part of this extraction.
 
 ```
 LoanProcessing.Tests/                          (to be created during extraction)

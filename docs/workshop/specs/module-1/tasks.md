@@ -6,8 +6,6 @@ Extract the credit evaluation business logic from `sp_EvaluateCredit` into the C
 
 The shadow comparison test infrastructure is already in place and will validate behavioral equivalence between the SP and the new C# implementation. Boundary tests and FsCheck property-based tests are currently gated — they will be enabled as part of this extraction once the calculator exists.
 
-Reference implementations are available in the `solutions/` folder if needed.
-
 ## Starting State
 
 - `ICreditEvaluationService` and `CreditEvaluationService` already exist — the service currently delegates to `sp_EvaluateCredit` via SqlCommand (SP-backed stub)
@@ -15,7 +13,6 @@ Reference implementations are available in the `solutions/` folder if needed.
 - Shadow comparison tests call the service stub directly and compare against the SP — currently passes trivially (both hit the SP)
 - Boundary tests (`TestCreditScoreBoundaries`, `TestRecommendationBoundaries`) are commented out — they require `CreditEvaluationCalculator` which doesn't exist yet
 - FsCheck CI step is gated in `buildspec.yml` — skipped when `LoanProcessing.Tests.csproj` doesn't exist
-- `LoanProcessing.Tests` project is in `solutions/` as a reference
 
 ## Tasks
 
@@ -99,7 +96,6 @@ Reference implementations are available in the `solutions/` folder if needed.
       4. `RiskScore_InRangeAndEqualsComponentSum`: for all valid inputs, verify result is in [0, 100] and equals clamped component sum
       5. `Recommendation_ReturnsValidCategory`: for all valid inputs, verify result is one of three valid strings
     - Add `LoanProcessing.Tests` to `LoanProcessing.sln` with project and configuration entries
-    - Reference implementation available in `solutions/LoanProcessing.Tests/` if needed
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5_
 
   - [ ] 5.3 Verify `buildspec.yml` PBT gate activates
@@ -122,7 +118,6 @@ Reference implementations are available in the `solutions/` folder if needed.
 - Each task references specific requirements for traceability
 - The existing shadow comparison tests serve as the behavioral equivalence gate — after Task 3, the shadow comparison becomes a real SP-vs-C# comparison instead of the current trivial SP-vs-SP comparison
 - The `sp_EvaluateCredit` stored procedure remains in the database unchanged for rollback purposes
-- Reference implementations are available in `solutions/` — `solutions/CreditEvaluationCalculator.cs` and `solutions/LoanProcessing.Tests/`
 
 ### CRITICAL: .NET Framework .csproj File Inclusion
 

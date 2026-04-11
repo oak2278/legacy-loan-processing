@@ -176,7 +176,7 @@ The tasks are ordered so the codebase compiles at every step:
 5. Enable boundary tests and PBT (turn on the tests that validate the new code)
 6. Final validation (deploy and run `/validation`)
 
-Note that `ICreditEvaluationService` and `CreditEvaluationService` already exist as an SP-backed stub. You don't need to create them from scratch — you're replacing the implementation. Reference implementations are available in the `solutions/` folder if you get stuck.
+Note that `ICreditEvaluationService` and `CreditEvaluationService` already exist as an SP-backed stub. You don't need to create them from scratch — you're replacing the implementation.
 
 ---
 
@@ -200,7 +200,7 @@ Review the comparison Kiro produces. The key things that must match exactly:
 - Recommendation strings must be exact: "Recommended for Approval", "Manual Review Required", "High Risk - Recommend Rejection"
 - Default interest rate: 12.99
 
-If anything doesn't match, the validation tests will catch it later — but it's better to spot discrepancies now. A reference implementation is available in `solutions/CreditEvaluationCalculator.cs`.
+If anything doesn't match, the validation tests will catch it later — but it's better to spot discrepancies now.
 
 **After Task 2 — Repository Extensions:**
 Notice the new methods added to `IInterestRateRepository` and `ILoanApplicationRepository`. These push data filtering to the database (matching what the stored procedure did) rather than loading everything into memory.
@@ -216,7 +216,7 @@ This is where the strangler pattern comes alive. `CreditEvaluationService` goes 
 **After Task 5 — Tests Enabled:**
 The boundary test calls in `CreditEvaluationTests.Run()` are uncommented, and the boundary test methods are implemented (the starter code has placeholder stubs that must be replaced with real implementations following the same `TestResult` pattern as the existing tests). The FsCheck property-based test project is created and runs in CI, testing the calculator with 100 random inputs per property. The PBT results appear on the validation page.
 
-> **Note:** The PBT project must use the same package versions as the existing project: xunit 2.4.2 (matching `xunit.runner.console.2.4.2` in `buildspec.yml`), FSharp.Core 4.2.3 (matching `LoanProcessing.Web/packages.config`), and FsCheck 2.16.6. A reference implementation is available in `solutions/LoanProcessing.Tests/`.
+> **Note:** The PBT project must use the same package versions as the existing project: xunit 2.4.2 (matching `xunit.runner.console.2.4.2` in `buildspec.yml`), FSharp.Core 4.2.3 (matching `LoanProcessing.Web/packages.config`), and FsCheck 2.16.6.
 
 ### Checkpoints
 
