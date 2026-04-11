@@ -294,10 +294,12 @@ After deploying the fast-forward code, run the validation dashboard again. All t
 
 **The interfaces are agent-tool-shaped.** `ICreditEvaluationService.Evaluate(applicationId)` has a clear input, a deterministic output, and no side-channel dependencies. In a future module, this becomes a Lambda function, a container endpoint, or an AI agent tool with minimal refactoring.
 
-**The database is now a pure data store.** No business logic remains in stored procedures. This makes the database migration in Module 2 dramatically simpler — it's just schema and data, no T-SQL to PL/pgSQL conversion needed.
+**The database is now a pure data store.** No business logic remains in stored procedures. This unblocks both the .NET framework upgrade (Module 2) and the database migration (Module 3) — each can proceed independently without converting T-SQL business logic.
 
 ---
 
 ## 10. What's Next
 
-In **Module 2**, you will migrate the database from SQL Server to Aurora PostgreSQL using AWS SCT and DMS. Because all business logic now lives in the .NET service layer, the migration is a pure data operation — no stored procedure conversion required.
+In **Module 2**, you will upgrade from .NET Framework 4.7.2 to .NET 10 and move from Windows/IIS to Linux using AWS Transform. Because all business logic now lives in testable C# code, the framework upgrade can be validated using the same shadow comparison tests — the stored procedures remain in SQL Server as a reference point throughout the upgrade. The validation framework proves nothing broke across the transition.
+
+In **Module 3**, you will migrate the database from SQL Server to Aurora PostgreSQL using AWS SCT and DMS. With business logic already in C# and the application running on .NET 10, the migration is a pure data operation — no stored procedure conversion required.
