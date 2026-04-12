@@ -99,3 +99,28 @@ resource "aws_iam_role_policy" "codebuild_kms" {
     ]
   })
 }
+
+# Additional IAM policy for Linux CodeBuild log group (Module 2)
+
+resource "aws_iam_role_policy" "codebuild_logs_linux" {
+  name = "codebuild-logs-linux-access"
+  role = aws_iam_role.codebuild.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ]
+        Resource = [
+          "arn:aws:logs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/codebuild/loan-processing-linux-${var.environment}",
+          "arn:aws:logs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/codebuild/loan-processing-linux-${var.environment}:*"
+        ]
+      }
+    ]
+  })
+}

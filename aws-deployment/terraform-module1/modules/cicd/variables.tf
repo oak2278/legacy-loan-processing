@@ -75,3 +75,17 @@ variable "resource_suffix" {
   type        = string
   default     = ""
 }
+
+# Linux deployment variables (Module 2)
+
+variable "linux_asg_name" {
+  description = "Name of the Linux Auto Scaling Group for deployment targets"
+  type        = string
+  default     = ""
+}
+
+variable "linux_target_group_name" {
+  description = "Name of the Linux ALB target group for load balancer integration"
+  type        = string
+  default     = ""
+}

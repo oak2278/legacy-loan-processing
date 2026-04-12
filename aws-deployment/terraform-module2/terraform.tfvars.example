@@ -1,0 +1,52 @@
+# Module 2 — Example Terraform Variables
+# Copy this file to terraform.tfvars and populate with values from Module 1 outputs.
+#
+# To get Module 1 output values, run from the Module 1 directory:
+#   cd ../terraform-module1 && terraform output
+
+# General Configuration
+aws_region   = "us-east-1"
+project_name = "loanprocessing"
+environment  = "workshop"
+
+# Networking — from Module 1 outputs
+# vpc_id             = "<terraform output vpc_id>"
+# private_subnet_ids = ["<terraform output private_subnet_ids[0]>", "<terraform output private_subnet_ids[1]>"]
+
+# Security — from Module 1 outputs
+# app_security_group_id = "<terraform output app_security_group_id>"
+
+# ALB — from Module 1 outputs
+# alb_listener_arn         = "<cd ../terraform-module1 && terraform output alb_listener_arn>"
+# windows_target_group_arn = "<cd ../terraform-module1 && terraform output target_group_arn>"
+
+# Compute Configuration
+instance_type = "t3.medium"
+key_name      = ""  # Optional: EC2 key pair name (use SSM Session Manager instead)
+
+# Database — from Module 1 outputs
+# db_endpoint   = "<terraform output db_endpoint>"
+db_name       = "LoanProcessing"
+# db_secret_arn = "<terraform output db_secret_arn>"
+
+# IAM — from Module 1 outputs
+# iam_instance_profile_name = "<cd ../terraform-module1 && terraform output instance_profile_name>"
+
+# CI/CD Configuration
+# github_connection_arn = "<cd ../terraform-module1 && terraform output github_connection_arn>"
+github_repository_id  = "aws-shawn/legacy-loan-processing"
+github_branch_name    = "main"
+notification_email    = ""  # Optional: Email for pipeline notifications
+
+# Traffic Weights — ALB Weighted Routing
+# Start with 100% Windows / 0% Linux. After verifying the Linux deployment:
+#   terraform apply -var="windows_traffic_weight=0" -var="linux_traffic_weight=100"
+windows_traffic_weight = 100
+linux_traffic_weight   = 0
+
+# Additional Tags
+tags = {
+  Owner      = "YourName"
+  CostCenter = "Workshop"
+  Module     = "Module2-DotNet10"
+}

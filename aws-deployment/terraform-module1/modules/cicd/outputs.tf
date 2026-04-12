@@ -157,3 +157,30 @@ output "db_secret_arn" {
   description = "ARN of the database credentials secret (passed through from database module)"
   value       = var.db_secret_arn
 }
+
+# Linux CI/CD Outputs (Module 2)
+
+output "linux_codebuild_project_name" {
+  description = "Name of the Linux CodeBuild project"
+  value       = aws_codebuild_project.linux.name
+}
+
+output "linux_codebuild_project_arn" {
+  description = "ARN of the Linux CodeBuild project"
+  value       = aws_codebuild_project.linux.arn
+}
+
+output "linux_codepipeline_name" {
+  description = "Name of the Linux CodePipeline"
+  value       = aws_codepipeline.linux.name
+}
+
+output "linux_codepipeline_arn" {
+  description = "ARN of the Linux CodePipeline"
+  value       = aws_codepipeline.linux.arn
+}
+
+output "linux_codedeploy_deployment_group_name" {
+  description = "Name of the Linux CodeDeploy deployment group"
+  value       = aws_codedeploy_deployment_group.linux.deployment_group_name
+}

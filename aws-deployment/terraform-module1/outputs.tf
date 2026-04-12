@@ -176,6 +176,27 @@ output "connection_instructions" {
   EOT
 }
 
+# Module 2 Dependencies — outputs needed by terraform-module2
+output "alb_listener_arn" {
+  description = "ARN of the ALB HTTP listener (needed by Module 2 for weighted routing)"
+  value       = module.compute.alb_listener_arn
+}
+
+output "target_group_arn" {
+  description = "ARN of the Windows target group (needed by Module 2 for weighted routing)"
+  value       = module.compute.target_group_arn
+}
+
+output "instance_profile_name" {
+  description = "Name of the IAM instance profile (needed by Module 2 for Linux instances)"
+  value       = module.security.instance_profile_name
+}
+
+output "github_connection_arn" {
+  description = "ARN of the CodeStar Connection to GitHub (needed by Module 2 for Linux pipeline)"
+  value       = var.github_connection_arn
+}
+
 # Workshop-specific outputs
 output "workshop_info" {
   description = "Information for workshop participants"

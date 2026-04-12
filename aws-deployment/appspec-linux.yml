@@ -1,0 +1,25 @@
+version: 0.0
+os: linux
+files:
+  - source: app
+    destination: /opt/loan-processing
+  - source: database
+    destination: /opt/loan-processing/database
+  - source: scripts
+    destination: /opt/loan-processing/scripts
+hooks:
+  ApplicationStop:
+    - location: scripts/stop-application.sh
+      timeout: 300
+  BeforeInstall:
+    - location: scripts/before-install.sh
+      timeout: 300
+  AfterInstall:
+    - location: scripts/configure-application.sh
+      timeout: 600
+  ApplicationStart:
+    - location: scripts/start-application.sh
+      timeout: 300
+  ValidateService:
+    - location: scripts/validate-deployment.sh
+      timeout: 300

@@ -155,7 +155,7 @@ The application deploys to AWS via a fully automated CI/CD pipeline:
 - **CodeDeploy** deploys to EC2 instances running IIS behind an ALB
 - **RDS SQL Server** hosts the database with credentials in Secrets Manager
 
-Infrastructure is managed with Terraform in `aws-deployment/terraform/`.
+Infrastructure is managed with Terraform in `aws-deployment/terraform-module1/`.
 
 For full details, see:
 - [aws-deployment/README.md](aws-deployment/README.md) — Pipeline architecture and setup
