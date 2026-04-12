@@ -2,10 +2,12 @@ using System;
 using System.ComponentModel.DataAnnotations;
 using System.Configuration;
 using System.Linq;
-using System.Web.Mvc;
 using LoanProcessing.Web.Data;
 using LoanProcessing.Web.Models;
 using LoanProcessing.Web.Services;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+
 
 namespace LoanProcessing.Web.Controllers
 {
@@ -25,12 +27,12 @@ namespace LoanProcessing.Web.Controllers
         public LoanController()
         {
             // Manual dependency injection - typical legacy pattern
-            var connectionString = ConfigurationManager.ConnectionStrings["LoanProcessingConnection"].ConnectionString;
+            var connectionString = System.Configuration.ConfigurationManager.ConnectionStrings["LoanProcessingConnection"]?.ConnectionString;
             var loanRepo = new LoanApplicationRepository(connectionString);
             var decisionRepo = new LoanDecisionRepository(connectionString);
             var scheduleRepo = new PaymentScheduleRepository(connectionString);
             var customerRepo = new CustomerRepository(connectionString);
-            
+
             _loanService = new LoanService(loanRepo, decisionRepo, scheduleRepo);
             _customerService = new CustomerService(customerRepo);
         }
@@ -118,7 +120,7 @@ namespace LoanProcessing.Web.Controllers
             {
                 // Log invalid search attempt (Requirement 7.2)
                 System.Diagnostics.Debug.WriteLine($"[SearchCustomers] Invalid search term: term is null, empty, or less than 2 characters");
-                return Json(new object[] { }, JsonRequestBehavior.AllowGet);
+                return Json(new object[] { });
             }
 
             // Log search request with masked search term (Requirement 7.2)
@@ -133,7 +135,7 @@ namespace LoanProcessing.Web.Controllers
             {
                 // Call service to search customers (service handles SSN masking)
                 var customers = _customerService.SearchCustomersForAutocomplete(term);
-                
+
                 // Transform to jQuery UI autocomplete format
                 // Format: { id, label, value, customerId }
                 var results = customers.Select(c => new
@@ -157,7 +159,7 @@ namespace LoanProcessing.Web.Controllers
                     System.Diagnostics.Debug.WriteLine($"[SearchCustomers] WARNING: Slow query detected: term='{maskedTerm}', executionTime={executionTimeMs}ms exceeds 500ms threshold");
                 }
 
-                return Json(results, JsonRequestBehavior.AllowGet);
+                return Json(results);
             }
             catch (Exception ex)
             {
@@ -167,9 +169,9 @@ namespace LoanProcessing.Web.Controllers
 
                 // Log error with full exception details and execution time (Requirement 7.2, 3.1)
                 System.Diagnostics.Debug.WriteLine($"[SearchCustomers] Error searching customers: term='{maskedTerm}', executionTime={executionTimeMs}ms, error='{ex.Message}', stackTrace='{ex.StackTrace}'");
-                
+
                 // Return empty array on error to gracefully handle failures
-                return Json(new object[] { }, JsonRequestBehavior.AllowGet);
+                return Json(new object[] { });
             }
         }
 
@@ -552,14 +554,14 @@ namespace LoanProcessing.Web.Controllers
     public class LoanDecisionViewModel
     {
         public int ApplicationId { get; set; }
-        
+
         [Required(ErrorMessage = "Decision is required")]
         public string Decision { get; set; }
-        
+
         public string DecisionBy { get; set; }
-        
+
         public string Comments { get; set; }
-        
+
         [Range(0.01, double.MaxValue, ErrorMessage = "Approved amount must be greater than zero")]
         public decimal? ApprovedAmount { get; set; }
     }

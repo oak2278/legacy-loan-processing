@@ -5,6 +5,8 @@ using LoanProcessing.Web.Models;
 using LoanProcessing.Web.Services;
 using LoanProcessing.Web.Validation.Helpers;
 using LoanProcessing.Web.Validation.Models;
+using TestResult = LoanProcessing.Web.Validation.Models.TestResult;
+
 
 namespace LoanProcessing.Web.Validation.Tests
 {
@@ -70,7 +72,7 @@ namespace LoanProcessing.Web.Validation.Tests
             _creditEvalService = creditEvalService;
         }
 
-        public List<TestResult> Run(ModernizationStage stage)
+        public List<LoanProcessing.Web.Validation.Models.TestResult> Run(LoanProcessing.Web.Validation.Models.ModernizationStage stage)
         {
             _shadowComparisonResults.Clear();
             var results = new List<TestResult>();

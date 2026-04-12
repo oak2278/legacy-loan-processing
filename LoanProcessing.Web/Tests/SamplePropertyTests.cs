@@ -1,5 +1,6 @@
 using System;
 using FsCheck;
+using FsCheck.Fluent;
 using LoanProcessing.Web.Models;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -25,7 +26,7 @@ namespace LoanProcessing.Web.Tests
         public void Property_CustomerGenerator_ProducesValidCustomers()
         {
             // Property: All generated customers must satisfy business constraints
-            var property = Prop.ForAll(
+            Property property = Prop.ForAll(
                 PropertyTestGenerators.ValidCustomer(),
                 customer =>
                 {
@@ -66,7 +67,7 @@ namespace LoanProcessing.Web.Tests
         public void Property_LoanApplicationGenerator_ProducesValidApplications()
         {
             // Property: All generated loan applications must satisfy business constraints
-            var property = Prop.ForAll(
+            Property property = Prop.ForAll(
                 PropertyTestGenerators.ValidLoanApplication(),
                 application =>
                 {
@@ -121,7 +122,7 @@ namespace LoanProcessing.Web.Tests
         public void Property_InterestRateGenerator_ProducesValidRates()
         {
             // Property: All generated interest rates must satisfy business constraints
-            var property = Prop.ForAll(
+            Property property = Prop.ForAll(
                 PropertyTestGenerators.ValidInterestRate(),
                 rate =>
                 {
@@ -165,7 +166,7 @@ namespace LoanProcessing.Web.Tests
         public void Property_PaymentScheduleParametersGenerator_ProducesValidParameters()
         {
             // Property: All generated payment schedule parameters must be valid
-            var property = Prop.ForAll(
+            Property property = Prop.ForAll(
                 PropertyTestGenerators.ValidPaymentScheduleParameters(),
                 parameters =>
                 {
@@ -198,7 +199,7 @@ namespace LoanProcessing.Web.Tests
         public void Property_LoanDecisionGenerator_ProducesValidDecisions()
         {
             // Property: All generated loan decisions must satisfy business constraints
-            var property = Prop.ForAll(
+            Property property = Prop.ForAll(
                 PropertyTestGenerators.ValidLoanDecision(),
                 decision =>
                 {
@@ -241,7 +242,7 @@ namespace LoanProcessing.Web.Tests
         public void Property_CustomerCreditScoreRangeGenerator_ProducesCustomersInRange()
         {
             // Test with excellent credit range (750-850)
-            var property = Prop.ForAll(
+            Property property = Prop.ForAll(
                 PropertyTestGenerators.CustomerWithCreditScore(750, 850),
                 customer =>
                 {
@@ -263,7 +264,7 @@ namespace LoanProcessing.Web.Tests
         public void Property_LoanTypeSpecificGenerator_ProducesCorrectType()
         {
             // Test with Mortgage loans
-            var property = Prop.ForAll(
+            Property property = Prop.ForAll(
                 PropertyTestGenerators.LoanApplicationOfType("Mortgage"),
                 application =>
                 {

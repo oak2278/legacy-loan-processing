@@ -2,8 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
-using System.Data.SqlClient;
 using LoanProcessing.Web.Models;
+using Microsoft.Data.SqlClient;
+
 
 namespace LoanProcessing.Web.Data
 {
@@ -33,7 +34,7 @@ namespace LoanProcessing.Web.Data
         /// Initializes a new instance of the ReportRepository class using the default connection string.
         /// </summary>
         public ReportRepository()
-            : this(ConfigurationManager.ConnectionStrings["LoanProcessingConnection"].ConnectionString)
+            : this(System.Configuration.ConfigurationManager.ConnectionStrings["LoanProcessingConnection"].ConnectionString)
         {
         }
 

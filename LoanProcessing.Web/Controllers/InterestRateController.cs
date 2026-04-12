@@ -1,9 +1,12 @@
 using System;
 using System.Configuration;
-using System.Web.Mvc;
 using LoanProcessing.Web.Data;
 using LoanProcessing.Web.Models;
 using LoanProcessing.Web.Services;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.Extensions.Configuration;
+
 
 namespace LoanProcessing.Web.Controllers
 {
@@ -19,10 +22,10 @@ namespace LoanProcessing.Web.Controllers
         /// Initializes a new instance of the InterestRateController class.
         /// Uses manual dependency injection pattern typical of legacy applications.
         /// </summary>
-        public InterestRateController()
+        public InterestRateController(IConfiguration configuration)
         {
             // Manual dependency injection - typical legacy pattern
-            var connectionString = ConfigurationManager.ConnectionStrings["LoanProcessingConnection"].ConnectionString;
+            var connectionString = configuration.GetConnectionString("LoanProcessingConnection");
             var rateRepository = new InterestRateRepository(connectionString);
             _rateService = new InterestRateService(rateRepository);
         }

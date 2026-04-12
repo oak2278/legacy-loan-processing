@@ -5,11 +5,13 @@ using System.Linq;
 using LoanProcessing.Web.Models;
 using LoanProcessing.Web.Services;
 using LoanProcessing.Web.Validation.Helpers;
-using LoanProcessing.Web.Validation.Models;
+using LoanProcessingModernizationStage = LoanProcessing.Web.Validation.Models.ModernizationStage;
+
+using LoanProcessingTestResult = LoanProcessing.Web.Validation.Models.TestResult;
 
 namespace LoanProcessing.Web.Validation.Tests
 {
-    public class LoanProcessingTests : IValidationTestCategory
+    public class LoanProcessingTests
     {
         private readonly ILoanService _loanService;
         private readonly IReportService _reportService;
@@ -24,9 +26,9 @@ namespace LoanProcessing.Web.Validation.Tests
             _customerTests = customerTests;
         }
 
-        public List<TestResult> Run(ModernizationStage stage)
+        public List<LoanProcessingTestResult> Run(LoanProcessingModernizationStage stage)
         {
-            var results = new List<TestResult>();
+            var results = new List<LoanProcessingTestResult>();
             // Reuse the customer created by CustomerBusinessTests
             int customerId = _customerTests.LastCreatedCustomerId;
 
@@ -38,7 +40,7 @@ namespace LoanProcessing.Web.Validation.Tests
             return results;
         }
 
-        private TestResult TestSubmitLoanApplication(ModernizationStage stage, int customerId)
+        private LoanProcessingTestResult TestSubmitLoanApplication(LoanProcessingModernizationStage stage, int customerId)
         {
             var sw = Stopwatch.StartNew();
             try
@@ -58,7 +60,7 @@ namespace LoanProcessing.Web.Validation.Tests
             catch (Exception ex) { sw.Stop(); return Fail(sw, "Submit Loan Application", "Submits a loan application and verifies Pending status", "Loan submitted", "Exception: " + ex.Message, stage); }
         }
 
-        private TestResult TestCreditEvaluation(ModernizationStage stage, int customerId)
+        private LoanProcessingTestResult TestCreditEvaluation(LoanProcessingModernizationStage stage, int customerId)
         {
             var sw = Stopwatch.StartNew();
             try
@@ -86,7 +88,7 @@ namespace LoanProcessing.Web.Validation.Tests
             catch (Exception ex) { sw.Stop(); return Fail(sw, "Credit Evaluation", "Evaluates credit and verifies risk score and recommendation", "Credit evaluation completed", "Exception: " + ex.Message, stage); }
         }
 
-        private TestResult TestProcessLoanDecision(ModernizationStage stage, int customerId)
+        private LoanProcessingTestResult TestProcessLoanDecision(LoanProcessingModernizationStage stage, int customerId)
         {
             var sw = Stopwatch.StartNew();
             try
@@ -109,7 +111,7 @@ namespace LoanProcessing.Web.Validation.Tests
             catch (Exception ex) { sw.Stop(); return Fail(sw, "Process Loan Decision", "Processes a loan decision and verifies status update", "Decision processed", "Exception: " + ex.Message, stage); }
         }
 
-        private TestResult TestPaymentSchedule(ModernizationStage stage, int customerId)
+        private LoanProcessingTestResult TestPaymentSchedule(LoanProcessingModernizationStage stage, int customerId)
         {
             var sw = Stopwatch.StartNew();
             try
@@ -138,7 +140,7 @@ namespace LoanProcessing.Web.Validation.Tests
             catch (Exception ex) { sw.Stop(); return Fail(sw, "Payment Schedule", "Verifies payment schedule for approved loan", "Payment schedule retrieved", "Exception: " + ex.Message, stage); }
         }
 
-        private TestResult TestPortfolioReport(ModernizationStage stage)
+        private LoanProcessingTestResult TestPortfolioReport(LoanProcessingModernizationStage stage)
         {
             var sw = Stopwatch.StartNew();
             try
@@ -154,24 +156,24 @@ namespace LoanProcessing.Web.Validation.Tests
             catch (Exception ex) { sw.Stop(); return Fail(sw, "Portfolio Report", "Generates a portfolio report and verifies aggregated data", "Report generated", "Exception: " + ex.Message, stage); }
         }
 
-        private TestResult Pass(Stopwatch sw, string name, string desc, string actual)
+        private LoanProcessingTestResult Pass(Stopwatch sw, string name, string desc, string actual)
         {
-            return new TestResult { TestName = name, Category = CategoryName, Description = desc, Passed = true, Expected = actual, Actual = actual, WhatToCheck = string.Empty, Duration = sw.Elapsed };
+            return new LoanProcessingTestResult { TestName = name, Category = CategoryName, Description = desc, Passed = true, Expected = actual, Actual = actual, WhatToCheck = string.Empty, Duration = sw.Elapsed };
         }
 
-        private TestResult Fail(Stopwatch sw, string name, string desc, string expected, string actual, ModernizationStage stage)
+        private LoanProcessingTestResult Fail(Stopwatch sw, string name, string desc, string expected, string actual, LoanProcessingModernizationStage stage)
         {
-            return new TestResult { TestName = name, Category = CategoryName, Description = desc, Passed = false, Expected = expected, Actual = actual, WhatToCheck = GetHint(stage), Duration = sw.Elapsed };
+            return new LoanProcessingTestResult { TestName = name, Category = CategoryName, Description = desc, Passed = false, Expected = expected, Actual = actual, WhatToCheck = GetHint(stage), Duration = sw.Elapsed };
         }
 
-        private static string GetHint(ModernizationStage stage)
+        private static string GetHint(LoanProcessingModernizationStage stage)
         {
             switch (stage)
             {
-                case ModernizationStage.PreModernization: return "Check that SQL Server stored procedures for loan processing are accessible and the service layer is configured correctly";
-                case ModernizationStage.PostModule1: return "Check that loan processing logic works with Aurora PostgreSQL";
-                case ModernizationStage.PostModule2: return "Check that EF Core migrations include loan tables and the Npgsql provider is configured";
-                case ModernizationStage.PostModule3: return "Check that the container can reach Aurora PostgreSQL and loan processing services are functioning";
+                case LoanProcessingModernizationStage.PreModernization: return "Check that SQL Server stored procedures for loan processing are accessible and the service layer is configured correctly";
+                case LoanProcessingModernizationStage.PostModule1: return "Check that loan processing logic works with Aurora PostgreSQL";
+                case LoanProcessingModernizationStage.PostModule2: return "Check that EF Core migrations include loan tables and the Npgsql provider is configured";
+                case LoanProcessingModernizationStage.PostModule3: return "Check that the container can reach Aurora PostgreSQL and loan processing services are functioning";
                 default: return "Check that the loan service layer and database connection are configured correctly";
             }
         }

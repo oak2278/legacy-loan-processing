@@ -3,12 +3,15 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Web.Script.Serialization;
 using LoanProcessing.Web.Data;
 using LoanProcessing.Web.Services;
 using LoanProcessing.Web.Validation.Helpers;
 using LoanProcessing.Web.Validation.Models;
 using LoanProcessing.Web.Validation.Tests;
+using System.Text.Json;
+using TestResult = LoanProcessing.Web.Validation.Models.TestResult;
+using ModernizationStage = LoanProcessing.Web.Validation.Models.ModernizationStage;
+
 
 namespace LoanProcessing.Web.Validation
 {
@@ -24,11 +27,11 @@ namespace LoanProcessing.Web.Validation
         private readonly DatabaseHelper _databaseHelper;
         private readonly TestDataCleanup _cleanup;
 
-        private readonly SmokeTests _smokeTests;
-        private readonly DataIntegrityTests _dataIntegrityTests;
-        private readonly CustomerBusinessTests _customerBusinessTests;
-        private readonly LoanProcessingTests _loanProcessingTests;
-        private readonly CreditEvaluationTests _creditEvaluationTests;
+        private readonly IValidationTestCategory _smokeTests;
+        private readonly IValidationTestCategory _dataIntegrityTests;
+        private readonly IValidationTestCategory _customerBusinessTests;
+        private readonly IValidationTestCategory _loanProcessingTests;
+        private readonly IValidationTestCategory _creditEvaluationTests;
 
         private readonly object _runLock = new object();
         private bool _baselineCaptured;
@@ -63,17 +66,18 @@ namespace LoanProcessing.Web.Validation
 
             // Load baseline snapshot (may be null if not yet captured)
             string baselinePath = BaselineManager.GetBaselineFilePath();
-            BaselineSnapshot baseline = BaselineManager.LoadBaseline(baselinePath);
+            LoanProcessing.Web.Validation.Helpers.BaselineSnapshot baseline = BaselineManager.LoadBaseline(baselinePath) as LoanProcessing.Web.Validation.Helpers.BaselineSnapshot;
 
             // Check if baseline file already exists to track capture state
             _baselineCaptured = baseline != null;
 
             // Test categories
             _smokeTests = new SmokeTests();
-            _dataIntegrityTests = new DataIntegrityTests(_databaseHelper, baseline);
-            _customerBusinessTests = new CustomerBusinessTests(customerService, _cleanup);
-            _loanProcessingTests = new LoanProcessingTests(loanService, reportService, _customerBusinessTests);
-            _creditEvaluationTests = new CreditEvaluationTests(loanService, customerService, _cleanup, _customerBusinessTests, _databaseHelper, new CreditEvaluationService(loanAppRepo, customerRepo, new InterestRateRepository(connectionString)));
+            _dataIntegrityTests = new DataIntegrityTests(_databaseHelper, null);
+            var customerBusinessTestsInstance = new CustomerBusinessTests(customerService, _cleanup);
+            _customerBusinessTests = customerBusinessTestsInstance;
+            _loanProcessingTests = (IValidationTestCategory)new LoanProcessingTests(loanService, reportService, customerBusinessTestsInstance);
+            _creditEvaluationTests = new CreditEvaluationTests(loanService, customerService, _cleanup, customerBusinessTestsInstance, _databaseHelper, new CreditEvaluationService(loanAppRepo, customerRepo, new InterestRateRepository(connectionString)));
         }
 
         /// <summary>
@@ -111,7 +115,7 @@ namespace LoanProcessing.Web.Validation
                     Results = allResults,
                     TotalDuration = overallStopwatch.Elapsed,
                     WhyThisMatters = GetWhyThisMatters(),
-                    ShadowComparisonResults = _creditEvaluationTests.ShadowComparisonResults,
+                    ShadowComparisonResults = (_creditEvaluationTests as LoanProcessing.Web.Validation.Tests.CreditEvaluationTests)?.ShadowComparisonResults,
                     PbtSummary = LoadPbtSummary()
                 };
 
@@ -229,8 +233,7 @@ namespace LoanProcessing.Web.Validation
                 string pbtPath = Path.Combine(basePath, "pbt-results.json");
                 if (!File.Exists(pbtPath)) return null;
                 string json = File.ReadAllText(pbtPath);
-                var serializer = new JavaScriptSerializer();
-                return serializer.Deserialize<PbtRunSummary>(json);
+                return JsonSerializer.Deserialize<PbtRunSummary>(json);
             }
             catch
             {

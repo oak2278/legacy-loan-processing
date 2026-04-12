@@ -2,38 +2,28 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
+using System.Linq;
 using LoanProcessing.Web.Validation.Helpers;
 using LoanProcessing.Web.Validation.Models;
+using LoanProcessingTestResult = LoanProcessing.Web.Validation.Models.TestResult;
+using MSTestResult = Microsoft.VisualStudio.TestTools.UnitTesting.TestResult;
 
 namespace LoanProcessing.Web.Validation.Tests
 {
-    /// <summary>
-    /// Holds baseline data captured during a Pre-Modernization run
-    /// for comparison at subsequent modernization stages.
-    /// </summary>
-    public class BaselineSnapshot
-    {
-        /// <summary>
-        /// Row counts per table (logical table name → count).
-        /// </summary>
-        public Dictionary<string, int> RowCounts { get; set; }
 
-        /// <summary>
-        /// Sample customer record for field-level verification.
-        /// </summary>
-        public SampleCustomerData SampleCustomer { get; set; }
-    }
 
-    /// <summary>
-    /// Holds sample customer field values for baseline comparison.
-    /// </summary>
-    public class SampleCustomerData
+    public class SampleCustomerSnapshot
     {
-        public int CustomerId { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public int CreditScore { get; set; }
         public decimal AnnualIncome { get; set; }
+    }
+
+    public class BaselineSnapshot
+    {
+        public Dictionary<string, int> RowCounts { get; set; }
+        public SampleCustomerSnapshot SampleCustomer { get; set; }
     }
 
     /// <summary>
@@ -76,9 +66,9 @@ namespace LoanProcessing.Web.Validation.Tests
             _baseline = baseline;
         }
 
-        public List<TestResult> Run(ModernizationStage stage)
+        public List<LoanProcessing.Web.Validation.Models.TestResult> Run(ModernizationStage stage)
         {
-            var results = new List<TestResult>();
+            var results = new List<LoanProcessingTestResult>();
 
             // Row count tests for all 5 tables
             foreach (var table in Tables)
@@ -97,7 +87,7 @@ namespace LoanProcessing.Web.Validation.Tests
 
         #region Row Count Tests
 
-        private TestResult TestRowCount(ModernizationStage stage, string tableName)
+        private LoanProcessingTestResult TestRowCount(ModernizationStage stage, string tableName)
         {
             var sw = Stopwatch.StartNew();
             try
@@ -108,7 +98,7 @@ namespace LoanProcessing.Web.Validation.Tests
                 // No baseline — just record the current count
                 if (_baseline == null || _baseline.RowCounts == null)
                 {
-                    return new TestResult
+                    return new LoanProcessingTestResult
                     {
                         TestName = tableName + " Row Count",
                         Category = CategoryName,
@@ -124,7 +114,7 @@ namespace LoanProcessing.Web.Validation.Tests
                 int expectedCount;
                 if (!_baseline.RowCounts.TryGetValue(tableName, out expectedCount))
                 {
-                    return new TestResult
+                    return new LoanProcessingTestResult
                     {
                         TestName = tableName + " Row Count",
                         Category = CategoryName,
@@ -138,7 +128,7 @@ namespace LoanProcessing.Web.Validation.Tests
                 }
 
                 bool passed = actualCount == expectedCount;
-                return new TestResult
+                return new LoanProcessingTestResult
                 {
                     TestName = tableName + " Row Count",
                     Category = CategoryName,
@@ -154,7 +144,7 @@ namespace LoanProcessing.Web.Validation.Tests
             {
                 sw.Stop();
                 var innerMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
-                return new TestResult
+                return new LoanProcessingTestResult
                 {
                     TestName = tableName + " Row Count",
                     Category = CategoryName,
@@ -172,9 +162,9 @@ namespace LoanProcessing.Web.Validation.Tests
 
         #region Constraint Existence Tests
 
-        private List<TestResult> TestConstraints(ModernizationStage stage)
+        private List<LoanProcessingTestResult> TestConstraints(ModernizationStage stage)
         {
-            var results = new List<TestResult>();
+            var results = new List<LoanProcessingTestResult>();
 
             // Primary keys on all 5 tables — check by type since PK names are auto-generated
             results.Add(TestConstraintByType(stage, "PRIMARY KEY", "Customers",
@@ -211,7 +201,7 @@ namespace LoanProcessing.Web.Validation.Tests
             return results;
         }
 
-        private TestResult TestConstraint(ModernizationStage stage, string constraintName,
+        private LoanProcessingTestResult TestConstraint(ModernizationStage stage, string constraintName,
             string tableName, string description)
         {
             var sw = Stopwatch.StartNew();
@@ -220,7 +210,7 @@ namespace LoanProcessing.Web.Validation.Tests
                 bool exists = _db.ConstraintExists(constraintName, tableName);
                 sw.Stop();
 
-                return new TestResult
+                return new LoanProcessingTestResult
                 {
                     TestName = constraintName + " Exists",
                     Category = CategoryName,
@@ -236,7 +226,7 @@ namespace LoanProcessing.Web.Validation.Tests
             {
                 sw.Stop();
                 var innerMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
-                return new TestResult
+                return new LoanProcessingTestResult
                 {
                     TestName = constraintName + " Exists",
                     Category = CategoryName,
@@ -250,7 +240,7 @@ namespace LoanProcessing.Web.Validation.Tests
             }
         }
 
-        private TestResult TestConstraintByType(ModernizationStage stage, string constraintType,
+        private LoanProcessingTestResult TestConstraintByType(ModernizationStage stage, string constraintType,
             string tableName, string description)
         {
             var sw = Stopwatch.StartNew();
@@ -282,7 +272,7 @@ namespace LoanProcessing.Web.Validation.Tests
 
                 sw.Stop();
                 string testName = constraintType + " on " + tableName;
-                return new TestResult
+                return new LoanProcessingTestResult
                 {
                     TestName = testName + " Exists",
                     Category = CategoryName,
@@ -299,7 +289,7 @@ namespace LoanProcessing.Web.Validation.Tests
                 sw.Stop();
                 var innerMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
                 string testName = constraintType + " on " + tableName;
-                return new TestResult
+                return new LoanProcessingTestResult
                 {
                     TestName = testName + " Exists",
                     Category = CategoryName,
@@ -317,7 +307,7 @@ namespace LoanProcessing.Web.Validation.Tests
 
         #region Sample Customer Record Verification
 
-        private TestResult TestSampleCustomer(ModernizationStage stage, int customerId = 1)
+        private LoanProcessingTestResult TestSampleCustomer(ModernizationStage stage, int customerId = 1)
         {
             var sw = Stopwatch.StartNew();
             try
@@ -338,7 +328,7 @@ namespace LoanProcessing.Web.Validation.Tests
 
                 if (dt.Rows.Count == 0)
                 {
-                    return new TestResult
+                    return new LoanProcessingTestResult
                     {
                         TestName = "Sample Customer Record",
                         Category = CategoryName,
@@ -364,7 +354,7 @@ namespace LoanProcessing.Web.Validation.Tests
                         "FirstName={0}, LastName={1}, CreditScore={2}, AnnualIncome={3}",
                         actualFirstName, actualLastName, actualCreditScore, actualAnnualIncome);
 
-                    return new TestResult
+                    return new LoanProcessingTestResult
                     {
                         TestName = "Sample Customer Record",
                         Category = CategoryName,
@@ -406,7 +396,7 @@ namespace LoanProcessing.Web.Validation.Tests
                     "FirstName={0}, LastName={1}, CreditScore={2}, AnnualIncome={3}",
                     actualFirstName, actualLastName, actualCreditScore, actualAnnualIncome);
 
-                return new TestResult
+                return new LoanProcessingTestResult
                 {
                     TestName = "Sample Customer Record",
                     Category = CategoryName,
@@ -422,7 +412,7 @@ namespace LoanProcessing.Web.Validation.Tests
             {
                 sw.Stop();
                 var innerMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
-                return new TestResult
+                return new LoanProcessingTestResult
                 {
                     TestName = "Sample Customer Record",
                     Category = CategoryName,

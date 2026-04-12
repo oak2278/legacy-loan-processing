@@ -2,9 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
-using System.Data.SqlClient;
 using LoanProcessing.Web.Models;
 using LoanProcessing.Web.Services;
+using Microsoft.Data.SqlClient;
+
 
 namespace LoanProcessing.Web.Data
 {
@@ -31,7 +32,7 @@ namespace LoanProcessing.Web.Data
         }
 
         public LoanDecisionRepository()
-            : this(ConfigurationManager.ConnectionStrings["LoanProcessingConnection"].ConnectionString)
+            : this(System.Configuration.ConfigurationManager.ConnectionStrings["LoanProcessingConnection"].ConnectionString)
         {
         }
 
@@ -107,7 +108,7 @@ namespace LoanProcessing.Web.Data
                 command.Connection = connection;
                 command.CommandType = CommandType.Text;
                 command.CommandText = @"
-                    SELECT 
+                    SELECT
                         DecisionId,
                         ApplicationId,
                         Decision,

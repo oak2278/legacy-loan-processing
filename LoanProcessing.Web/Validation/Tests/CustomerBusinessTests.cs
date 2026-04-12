@@ -26,9 +26,9 @@ namespace LoanProcessing.Web.Validation.Tests
             _cleanup = cleanup;
         }
 
-        public List<TestResult> Run(ModernizationStage stage)
+        public List<LoanProcessing.Web.Validation.Models.TestResult> Run(ModernizationStage stage)
         {
-            var results = new List<TestResult>();
+            var results = new List<LoanProcessing.Web.Validation.Models.TestResult>();
 
             // Clean slate
             _cleanup.CleanupBySSNPrefix("999-");
@@ -43,7 +43,7 @@ namespace LoanProcessing.Web.Validation.Tests
             return results;
         }
 
-        private TestResult TestCreateCustomer(ModernizationStage stage)
+        private LoanProcessing.Web.Validation.Models.TestResult TestCreateCustomer(ModernizationStage stage)
         {
             var sw = Stopwatch.StartNew();
             try
@@ -72,7 +72,7 @@ namespace LoanProcessing.Web.Validation.Tests
             catch (Exception ex) { sw.Stop(); return Fail(sw, "Create Customer", "Creates a new customer via the service layer and verifies the returned ID is valid", "Customer created", "Exception: " + ex.Message, stage); }
         }
 
-        private TestResult TestRetrieveCustomer(ModernizationStage stage)
+        private LoanProcessing.Web.Validation.Models.TestResult TestRetrieveCustomer(ModernizationStage stage)
         {
             var sw = Stopwatch.StartNew();
             try
@@ -91,7 +91,7 @@ namespace LoanProcessing.Web.Validation.Tests
             catch (Exception ex) { sw.Stop(); return Fail(sw, "Retrieve Customer", "Retrieves an existing customer by ID and verifies the returned data is valid", "Customer retrieved", "Exception: " + ex.Message, stage); }
         }
 
-        private TestResult TestUpdateCustomer(ModernizationStage stage)
+        private LoanProcessing.Web.Validation.Models.TestResult TestUpdateCustomer(ModernizationStage stage)
         {
             var sw = Stopwatch.StartNew();
             try
@@ -115,7 +115,7 @@ namespace LoanProcessing.Web.Validation.Tests
             catch (Exception ex) { sw.Stop(); return Fail(sw, "Update Customer", "Updates a customer's AnnualIncome and CreditScore, then verifies changes persisted", "Customer updated", "Exception: " + ex.Message, stage); }
         }
 
-        private TestResult TestSearchCustomer(ModernizationStage stage)
+        private LoanProcessing.Web.Validation.Models.TestResult TestSearchCustomer(ModernizationStage stage)
         {
             var sw = Stopwatch.StartNew();
             try
@@ -132,14 +132,14 @@ namespace LoanProcessing.Web.Validation.Tests
             catch (Exception ex) { sw.Stop(); return Fail(sw, "Search Customer", "Searches for customers by name and verifies matching results are returned", "Search returns results", "Exception: " + ex.Message, stage); }
         }
 
-        private TestResult Pass(Stopwatch sw, string name, string desc, string actual)
+        private LoanProcessing.Web.Validation.Models.TestResult Pass(Stopwatch sw, string name, string desc, string actual)
         {
-            return new TestResult { TestName = name, Category = CategoryName, Description = desc, Passed = true, Expected = actual, Actual = actual, WhatToCheck = string.Empty, Duration = sw.Elapsed };
+            return new LoanProcessing.Web.Validation.Models.TestResult { TestName = name, Category = CategoryName, Description = desc, Passed = true, Expected = actual, Actual = actual, WhatToCheck = string.Empty, Duration = sw.Elapsed };
         }
 
-        private TestResult Fail(Stopwatch sw, string name, string desc, string expected, string actual, ModernizationStage stage)
+        private LoanProcessing.Web.Validation.Models.TestResult Fail(Stopwatch sw, string name, string desc, string expected, string actual, ModernizationStage stage)
         {
-            return new TestResult { TestName = name, Category = CategoryName, Description = desc, Passed = false, Expected = expected, Actual = actual, WhatToCheck = GetHint(stage), Duration = sw.Elapsed };
+            return new LoanProcessing.Web.Validation.Models.TestResult { TestName = name, Category = CategoryName, Description = desc, Passed = false, Expected = expected, Actual = actual, WhatToCheck = GetHint(stage), Duration = sw.Elapsed };
         }
 
         private static string GetHint(ModernizationStage stage)

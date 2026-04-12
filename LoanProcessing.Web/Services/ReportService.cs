@@ -1,7 +1,8 @@
 using System;
-using System.Data.SqlClient;
 using LoanProcessing.Web.Data;
 using LoanProcessing.Web.Models;
+using Microsoft.Data.SqlClient;
+
 
 namespace LoanProcessing.Web.Services
 {

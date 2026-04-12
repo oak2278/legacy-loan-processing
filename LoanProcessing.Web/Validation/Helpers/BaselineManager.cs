@@ -7,6 +7,27 @@ using LoanProcessing.Web.Validation.Tests;
 namespace LoanProcessing.Web.Validation.Helpers
 {
     /// <summary>
+    /// Represents a snapshot of database state for baseline comparison.
+    /// </summary>
+    public class BaselineSnapshot
+    {
+        public System.Collections.Generic.Dictionary<string, int> RowCounts { get; set; }
+        public LoanProcessing.Web.Validation.Helpers.SampleCustomerData SampleCustomer { get; set; }
+    }
+
+    /// <summary>
+    /// Represents sample customer data captured for baseline comparison.
+    /// </summary>
+    public class SampleCustomerData
+    {
+        public int CustomerId { get; set; }
+        public string FirstName { get; set; }
+        public string LastName { get; set; }
+        public int CreditScore { get; set; }
+        public decimal AnnualIncome { get; set; }
+    }
+
+    /// <summary>
     /// Manages baseline snapshot capture, saving, and loading for data integrity
     /// comparison across modernization stages. The baseline is stored as a JSON
     /// file in the App_Data folder.
@@ -33,7 +54,7 @@ namespace LoanProcessing.Web.Validation.Helpers
                 throw new ArgumentNullException("db");
             }
 
-            var snapshot = new BaselineSnapshot
+            var snapshot = new LoanProcessing.Web.Validation.Helpers.BaselineSnapshot
             {
                 RowCounts = new System.Collections.Generic.Dictionary<string, int>()
             };

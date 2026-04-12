@@ -6,6 +6,6 @@ namespace LoanProcessing.Web.Validation
     public interface IValidationTestCategory
     {
         string CategoryName { get; }
-        List<TestResult> Run(ModernizationStage stage);
+        List<LoanProcessing.Web.Validation.Models.TestResult> Run(ModernizationStage stage);
     }
 }

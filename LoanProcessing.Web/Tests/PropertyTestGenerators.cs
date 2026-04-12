@@ -1,5 +1,6 @@
 using System;
 using FsCheck;
+using FsCheck.Fluent;
 using LoanProcessing.Web.Models;
 
 namespace LoanProcessing.Web.Tests

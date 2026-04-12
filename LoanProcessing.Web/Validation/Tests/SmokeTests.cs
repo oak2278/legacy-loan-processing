@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net.Http;
 using LoanProcessing.Web.Validation.Models;
+using TestResult = global::LoanProcessing.Web.Validation.Models.TestResult;
 
 namespace LoanProcessing.Web.Validation.Tests
 {
@@ -48,7 +49,7 @@ namespace LoanProcessing.Web.Validation.Tests
             return client;
         }
 
-        public List<TestResult> Run(ModernizationStage stage)
+        public List<TestResult> Run(LoanProcessing.Web.Validation.Models.ModernizationStage stage)
         {
             var results = new List<TestResult>();
 

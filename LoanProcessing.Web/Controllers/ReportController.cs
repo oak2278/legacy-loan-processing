@@ -2,10 +2,12 @@ using System;
 using System.Configuration;
 using System.Linq;
 using System.Text;
-using System.Web.Mvc;
 using LoanProcessing.Web.Data;
 using LoanProcessing.Web.Models;
 using LoanProcessing.Web.Services;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+
 
 namespace LoanProcessing.Web.Controllers
 {
@@ -24,7 +26,7 @@ namespace LoanProcessing.Web.Controllers
         public ReportController()
         {
             // Manual dependency injection - typical legacy pattern
-            var connectionString = ConfigurationManager.ConnectionStrings["LoanProcessingConnection"].ConnectionString;
+            var connectionString = System.Configuration.ConfigurationManager.ConnectionStrings["LoanProcessingConnection"]?.ConnectionString;
             var reportRepository = new ReportRepository(connectionString);
             _reportService = new ReportService(reportRepository);
         }
@@ -116,25 +118,25 @@ namespace LoanProcessing.Web.Controllers
             // Add report header with filters
             csv.AppendLine("Portfolio Report");
             csv.AppendLine($"Generated: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
-            
+
             if (report.StartDate.HasValue || report.EndDate.HasValue)
             {
                 var startDateStr = report.StartDate.HasValue ? report.StartDate.Value.ToString("yyyy-MM-dd") : "N/A";
                 var endDateStr = report.EndDate.HasValue ? report.EndDate.Value.ToString("yyyy-MM-dd") : "N/A";
                 csv.AppendLine($"Date Range: {startDateStr} to {endDateStr}");
             }
-            
+
             if (!string.IsNullOrWhiteSpace(report.LoanType))
             {
                 csv.AppendLine($"Loan Type Filter: {report.LoanType}");
             }
-            
+
             csv.AppendLine();
 
             // Add portfolio summary section
             csv.AppendLine("Portfolio Summary");
             csv.AppendLine("Metric,Value");
-            
+
             if (report.Summary != null)
             {
                 csv.AppendLine($"Total Loans,{report.Summary.TotalLoans}");
@@ -142,29 +144,29 @@ namespace LoanProcessing.Web.Controllers
                 csv.AppendLine($"Rejected Loans,{report.Summary.RejectedLoans}");
                 csv.AppendLine($"Pending Loans,{report.Summary.PendingLoans}");
                 csv.AppendLine($"Total Approved Amount,\"{report.Summary.TotalApprovedAmount:C}\"");
-                
+
                 if (report.Summary.AverageApprovedAmount.HasValue)
                 {
                     csv.AppendLine($"Average Approved Amount,\"{report.Summary.AverageApprovedAmount.Value:C}\"");
                 }
-                
+
                 if (report.Summary.AverageInterestRate.HasValue)
                 {
                     csv.AppendLine($"Average Interest Rate,{report.Summary.AverageInterestRate.Value:F2}%");
                 }
-                
+
                 if (report.Summary.AverageRiskScore.HasValue)
                 {
                     csv.AppendLine($"Average Risk Score,{report.Summary.AverageRiskScore.Value}");
                 }
             }
-            
+
             csv.AppendLine();
 
             // Add loan type breakdown section
             csv.AppendLine("Loan Type Breakdown");
             csv.AppendLine("Loan Type,Total Applications,Approved Count,Total Amount,Average Rate");
-            
+
             if (report.LoanTypeBreakdown != null)
             {
                 foreach (var breakdown in report.LoanTypeBreakdown)
@@ -173,13 +175,13 @@ namespace LoanProcessing.Web.Controllers
                     csv.AppendLine($"{breakdown.LoanType},{breakdown.TotalApplications},{breakdown.ApprovedCount},\"{breakdown.TotalAmount:C}\",{avgRate}");
                 }
             }
-            
+
             csv.AppendLine();
 
             // Add risk distribution section
             csv.AppendLine("Risk Distribution");
             csv.AppendLine("Risk Category,Loan Count,Total Amount,Average Rate");
-            
+
             if (report.RiskDistribution != null)
             {
                 foreach (var risk in report.RiskDistribution)
@@ -192,7 +194,7 @@ namespace LoanProcessing.Web.Controllers
             // Convert to bytes and return as file
             var bytes = Encoding.UTF8.GetBytes(csv.ToString());
             var fileName = $"PortfolioReport_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
-            
+
             return File(bytes, "text/csv", fileName);
         }
 

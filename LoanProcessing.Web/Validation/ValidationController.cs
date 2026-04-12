@@ -1,7 +1,8 @@
 using System;
 using System.Configuration;
-using System.Web.Mvc;
 using LoanProcessing.Web.Validation.Models;
+using Microsoft.AspNetCore.Mvc;
+
 
 namespace LoanProcessing.Web.Validation
 {
@@ -19,7 +20,7 @@ namespace LoanProcessing.Web.Validation
         /// </summary>
         public ValidationController()
         {
-            var connectionString = ConfigurationManager.ConnectionStrings["LoanProcessingConnection"].ConnectionString;
+            var connectionString = System.Configuration.ConfigurationManager.ConnectionStrings["LoanProcessingConnection"]?.ConnectionString;
             _validationService = new ValidationService(connectionString);
         }
 

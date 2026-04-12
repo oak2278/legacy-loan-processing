@@ -1,5 +1,6 @@
 using System;
 using FsCheck;
+using FsCheck.Fluent;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace LoanProcessing.Web.Tests
@@ -21,20 +22,9 @@ namespace LoanProcessing.Web.Tests
         {
             get
             {
-                var config = Config.Quick;
-                return new Config(
-                    maxTest: 100,
-                    maxFail: config.MaxFail,
-                    replay: config.Replay,
-                    name: config.Name,
-                    startSize: config.StartSize,
-                    endSize: config.EndSize,
-                    quietOnSuccess: false,
-                    every: config.Every,
-                    everyShrink: config.EveryShrink,
-                    arbitrary: config.Arbitrary,
-                    runner: config.Runner
-                );
+                return Config.Quick
+                    .WithMaxTest(100)
+                    .WithQuietOnSuccess(false);
             }
         }
 
@@ -45,20 +35,9 @@ namespace LoanProcessing.Web.Tests
         {
             get
             {
-                var config = DefaultConfig;
-                return new Config(
-                    maxTest: config.MaxTest,
-                    maxFail: config.MaxFail,
-                    replay: config.Replay,
-                    name: config.Name,
-                    startSize: config.StartSize,
-                    endSize: config.EndSize,
-                    quietOnSuccess: false,
-                    every: Config.Verbose.Every,
-                    everyShrink: Config.Verbose.EveryShrink,
-                    arbitrary: config.Arbitrary,
-                    runner: config.Runner
-                );
+                return DefaultConfig
+                    .WithEvery(Config.Verbose.Every)
+                    .WithEveryShrink(Config.Verbose.EveryShrink);
             }
         }
 
@@ -69,20 +48,9 @@ namespace LoanProcessing.Web.Tests
         {
             get
             {
-                var config = Config.Quick;
-                return new Config(
-                    maxTest: 10,
-                    maxFail: config.MaxFail,
-                    replay: config.Replay,
-                    name: config.Name,
-                    startSize: config.StartSize,
-                    endSize: config.EndSize,
-                    quietOnSuccess: false,
-                    every: config.Every,
-                    everyShrink: config.EveryShrink,
-                    arbitrary: config.Arbitrary,
-                    runner: config.Runner
-                );
+                return Config.Quick
+                    .WithMaxTest(10)
+                    .WithQuietOnSuccess(false);
             }
         }
 

@@ -203,7 +203,11 @@
 </div>
 
 @section scripts {
-    @Scripts.Render("~/bundles/jqueryval")
+    <script src="~/Scripts/jquery.validate.min.js"></script>
+<script src="~/Scripts/jquery.validate.js"></script>
+<script src="~/Scripts/jquery.validate.unobtrusive.min.js"></script>
+<script src="~/Scripts/jquery.validate.unobtrusive.js"></script>
+<script src="~/Scripts/jquery.validate-vsdoc.js"></script>
     <script>
         $(document).ready(function () {
             var requestedAmount = @(application != null ? application.RequestedAmount : 0);

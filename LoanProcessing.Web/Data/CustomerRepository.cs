@@ -2,8 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
-using System.Data.SqlClient;
 using LoanProcessing.Web.Models;
+using Microsoft.Data.SqlClient;
+
 
 namespace LoanProcessing.Web.Data
 {
@@ -33,7 +34,7 @@ namespace LoanProcessing.Web.Data
         /// Initializes a new instance of the CustomerRepository class using the default connection string.
         /// </summary>
         public CustomerRepository()
-            : this(ConfigurationManager.ConnectionStrings["LoanProcessingConnection"].ConnectionString)
+            : this(System.Configuration.ConfigurationManager.ConnectionStrings["LoanProcessingConnection"].ConnectionString)
         {
         }
 
@@ -78,9 +79,9 @@ namespace LoanProcessing.Web.Data
             using (var command = new SqlCommand("sp_SearchCustomers", connection))
             {
                 command.CommandType = CommandType.StoredProcedure;
-                
+
                 // Add parameters - use DBNull.Value for null values
-                command.Parameters.AddWithValue("@SearchTerm", 
+                command.Parameters.AddWithValue("@SearchTerm",
                     string.IsNullOrWhiteSpace(searchTerm) ? (object)DBNull.Value : searchTerm);
                 command.Parameters.AddWithValue("@CustomerId", DBNull.Value);
                 command.Parameters.AddWithValue("@SSN", DBNull.Value);
@@ -240,8 +241,8 @@ namespace LoanProcessing.Web.Data
                 Phone = reader.GetString(reader.GetOrdinal("Phone")),
                 Address = reader.GetString(reader.GetOrdinal("Address")),
                 CreatedDate = reader.GetDateTime(reader.GetOrdinal("CreatedDate")),
-                ModifiedDate = reader.IsDBNull(reader.GetOrdinal("ModifiedDate")) 
-                    ? (DateTime?)null 
+                ModifiedDate = reader.IsDBNull(reader.GetOrdinal("ModifiedDate"))
+                    ? (DateTime?)null
                     : reader.GetDateTime(reader.GetOrdinal("ModifiedDate"))
             };
         }

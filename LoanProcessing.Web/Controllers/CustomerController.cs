@@ -1,9 +1,10 @@
 using System;
 using System.Configuration;
-using System.Web.Mvc;
 using LoanProcessing.Web.Data;
 using LoanProcessing.Web.Models;
 using LoanProcessing.Web.Services;
+using Microsoft.AspNetCore.Mvc;
+
 
 namespace LoanProcessing.Web.Controllers
 {
@@ -22,7 +23,7 @@ namespace LoanProcessing.Web.Controllers
         public CustomerController()
         {
             // Manual dependency injection - typical legacy pattern
-            var connectionString = ConfigurationManager.ConnectionStrings["LoanProcessingConnection"].ConnectionString;
+            var connectionString = System.Configuration.ConfigurationManager.ConnectionStrings["LoanProcessingConnection"]?.ConnectionString;
             var customerRepository = new CustomerRepository(connectionString);
             _customerService = new CustomerService(customerRepository);
         }

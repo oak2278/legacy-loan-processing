@@ -1,8 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
 using Npgsql;
+using Microsoft.Data.SqlClient;
+
 
 namespace LoanProcessing.Web.Validation.Helpers
 {
@@ -170,9 +171,9 @@ namespace LoanProcessing.Web.Validation.Helpers
                         {
                             command.CommandTimeout = CommandTimeoutSeconds;
                             AddNpgsqlParameters(command, parameters);
-                            using (var adapter = new NpgsqlDataAdapter(command))
+                            using (var reader = command.ExecuteReader())
                             {
-                                adapter.Fill(dataTable);
+                                dataTable.Load(reader);
                             }
                         }
                     }
