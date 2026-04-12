@@ -1,0 +1,20 @@
+{
+  "logs": {
+    "logs_collected": {
+      "files": {
+        "collect_list": [
+          { "file_path": "/var/log/loan-processing/*.log", "log_group_name": "/aws/ec2/${project_name}", "log_stream_name": "{instance_id}/app", "timezone": "UTC" },
+          { "file_path": "/var/log/messages", "log_group_name": "/aws/ec2/${project_name}", "log_stream_name": "{instance_id}/system", "timezone": "UTC" }
+        ]
+      }
+    }
+  },
+  "metrics": {
+    "namespace": "${project_name}/${environment}",
+    "metrics_collected": {
+      "cpu": { "measurement": [{ "name": "cpu_usage_idle", "rename": "CPU_IDLE", "unit": "Percent" }], "metrics_collection_interval": 60, "totalcpu": false },
+      "disk": { "measurement": [{ "name": "used_percent", "rename": "DISK_USED", "unit": "Percent" }], "metrics_collection_interval": 60, "resources": ["*"] },
+      "memory": { "measurement": [{ "name": "mem_used_percent", "rename": "MEM_USED", "unit": "Percent" }], "metrics_collection_interval": 60 }
+    }
+  }
+}

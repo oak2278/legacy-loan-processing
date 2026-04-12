@@ -111,3 +111,72 @@ resource "aws_codedeploy_deployment_group" "loan_processing" {
     }
   )
 }
+
+# Linux CodeDeploy Deployment Group
+# This deployment group targets the Linux ASG for .NET 10 application deployments
+# Reuses the existing CodeDeploy application (same app, separate deployment group)
+# Requirements: 8.5, 9.1
+
+resource "aws_codedeploy_deployment_group" "linux" {
+  app_name              = aws_codedeploy_app.loan_processing.name
+  deployment_group_name = "loan-processing-linux-${var.environment}"
+  service_role_arn      = aws_iam_role.codedeploy.arn
+
+  # Rolling deployment: one instance at a time
+  deployment_config_name = "CodeDeployDefault.OneAtATime"
+
+  # Link to Linux Auto Scaling Group
+  autoscaling_groups = [var.linux_asg_name]
+
+  # IN_PLACE deployment with traffic control
+  deployment_style {
+    deployment_option = "WITH_TRAFFIC_CONTROL"
+    deployment_type   = "IN_PLACE"
+  }
+
+  # Configure load balancer integration with Linux ALB target group
+  load_balancer_info {
+    target_group_info {
+      name = var.linux_target_group_name
+    }
+  }
+
+  # Enable automatic rollback on deployment failures and alarm triggers
+  auto_rollback_configuration {
+    enabled = true
+    events  = ["DEPLOYMENT_FAILURE", "DEPLOYMENT_STOP_ON_ALARM"]
+  }
+
+  # Link CloudWatch alarms for auto-rollback
+  alarm_configuration {
+    enabled = true
+    alarms = [
+      aws_cloudwatch_metric_alarm.deployment_failure.alarm_name,
+      aws_cloudwatch_metric_alarm.repeated_deployment_failures.alarm_name,
+      aws_cloudwatch_metric_alarm.deployment_duration_exceeded.alarm_name
+    ]
+  }
+
+  # SNS notification triggers for deployment events
+  trigger_configuration {
+    trigger_events = [
+      "DeploymentStart",
+      "DeploymentSuccess",
+      "DeploymentFailure",
+      "DeploymentRollback"
+    ]
+    trigger_name       = "linux-deployment-notifications-${var.environment}"
+    trigger_target_arn = aws_sns_topic.pipeline_notifications.arn
+  }
+
+  tags = merge(
+    var.common_tags,
+    {
+      Name        = "loan-processing-linux-${var.environment}"
+      Environment = var.environment
+      Project     = "loan-processing"
+      Platform    = "linux"
+      ManagedBy   = "terraform"
+    }
+  )
+}

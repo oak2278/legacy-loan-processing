@@ -28,7 +28,14 @@ namespace LoanProcessing.Web.Validation
 
                 if (!isPostgreSQL)
                 {
-                    // SQL Server connection string → Pre-Modernization
+                    // SQL Server connection string — check .NET version
+                    if (IsDotNet10OrLater())
+                    {
+                        // SQL Server + .NET 10+ → PostDotNet10
+                        return ModernizationStage.PostDotNet10;
+                    }
+
+                    // SQL Server + .NET Framework 4.x → PreModernization
                     return ModernizationStage.PreModernization;
                 }
 
@@ -73,6 +80,46 @@ namespace LoanProcessing.Web.Validation
 
             return connectionString.IndexOf("Host=", StringComparison.OrdinalIgnoreCase) >= 0
                 || connectionString.IndexOf("Npgsql", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        /// <summary>
+        /// Checks if the runtime is .NET 10 or later.
+        /// Uses Environment.Version first, then falls back to
+        /// RuntimeInformation.FrameworkDescription if available.
+        /// On .NET Framework 4.x, Environment.Version.Major returns 4.
+        /// On .NET 10+, Environment.Version.Major returns 10+.
+        /// </summary>
+        private static bool IsDotNet10OrLater()
+        {
+            var version = Environment.Version;
+            if (version.Major >= 10)
+            {
+                return true;
+            }
+
+            try
+            {
+                var frameworkDescription = GetFrameworkDescription();
+                if (!string.IsNullOrEmpty(frameworkDescription))
+                {
+                    if (frameworkDescription.StartsWith(".NET ", StringComparison.OrdinalIgnoreCase)
+                        && !frameworkDescription.StartsWith(".NET Framework", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var parts = frameworkDescription.Substring(5).Trim().Split('.');
+                        int major;
+                        if (parts.Length > 0 && int.TryParse(parts[0], out major))
+                        {
+                            return major >= 10;
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // RuntimeInformation not available — that's fine
+            }
+
+            return false;
         }
 
         /// <summary>

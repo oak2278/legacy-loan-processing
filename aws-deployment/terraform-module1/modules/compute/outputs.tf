@@ -54,3 +54,9 @@ output "target_group_name" {
   description = "Name of the target group"
   value       = aws_lb_target_group.app.name
 }
+
+# Module 2 dependencies
+output "alb_listener_arn" {
+  description = "ARN of the ALB HTTP listener (needed by Module 2 for weighted routing)"
+  value       = aws_lb_listener.http.arn
+}

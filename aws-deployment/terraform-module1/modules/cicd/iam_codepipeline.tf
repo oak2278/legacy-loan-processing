@@ -160,3 +160,52 @@ resource "aws_iam_role_policy" "codepipeline_sns" {
     ]
   })
 }
+
+# Additional IAM policies for Linux CI/CD pipeline (Module 2)
+
+# Policy for Linux CodeBuild project access
+resource "aws_iam_role_policy" "codepipeline_codebuild_linux" {
+  name = "codepipeline-codebuild-linux-access"
+  role = aws_iam_role.codepipeline.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "codebuild:StartBuild",
+          "codebuild:BatchGetBuilds"
+        ]
+        Resource = "arn:aws:codebuild:${var.aws_region}:${data.aws_caller_identity.current.account_id}:project/loan-processing-linux-${var.environment}"
+      }
+    ]
+  })
+}
+
+# Policy for Linux CodeDeploy deployment group access
+resource "aws_iam_role_policy" "codepipeline_codedeploy_linux" {
+  name = "codepipeline-codedeploy-linux-access"
+  role = aws_iam_role.codepipeline.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "codedeploy:CreateDeployment",
+          "codedeploy:GetDeployment",
+          "codedeploy:GetDeploymentConfig",
+          "codedeploy:GetApplicationRevision",
+          "codedeploy:RegisterApplicationRevision"
+        ]
+        Resource = [
+          "arn:aws:codedeploy:${var.aws_region}:${data.aws_caller_identity.current.account_id}:application:loan-processing-${var.environment}",
+          "arn:aws:codedeploy:${var.aws_region}:${data.aws_caller_identity.current.account_id}:deploymentgroup:loan-processing-${var.environment}/loan-processing-linux-${var.environment}",
+          "arn:aws:codedeploy:${var.aws_region}:${data.aws_caller_identity.current.account_id}:deploymentconfig:*"
+        ]
+      }
+    ]
+  })
+}

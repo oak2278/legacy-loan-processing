@@ -253,6 +253,8 @@ namespace LoanProcessing.Web.Validation
                     return "Post-Module-1 (Aurora PostgreSQL)";
                 case ModernizationStage.PostModule2:
                     return "Post-Module-2 (.NET 8)";
+                case ModernizationStage.PostDotNet10:
+                    return "Post-Module-2 (.NET 10 + SQL Server + Kestrel)";
                 case ModernizationStage.PostModule3:
                     return "Post-Module-3 (Containerized)";
                 default:
@@ -270,6 +272,8 @@ namespace LoanProcessing.Web.Validation
                     return "You completed Module 1: Database Modernization. The database was migrated from SQL Server to Aurora PostgreSQL using AWS DMS. These tests verify that all data was preserved and the application functions correctly with the new database engine.";
                 case ModernizationStage.PostModule2:
                     return "You completed Module 2: Application Modernization. The application was migrated from .NET Framework 4.7.2 to .NET 8 with EF Core. These tests verify that the application stack modernization preserved all functionality.";
+                case ModernizationStage.PostDotNet10:
+                    return "You completed Module 2: .NET 10 Modernization. The application was upgraded from .NET Framework 4.7.2 to .NET 10 using AWS Transform and is now running on Linux with Kestrel. SQL Server remains the database. These tests verify that the framework upgrade and platform change preserved all functionality.";
                 case ModernizationStage.PostModule3:
                     return "You completed Module 3: Compute Modernization. The application was containerized and deployed to a container platform. These tests verify that the containerized deployment preserved all functionality and connectivity.";
                 default:
