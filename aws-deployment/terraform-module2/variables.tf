@@ -47,6 +47,11 @@ variable "app_security_group_id" {
   type        = string
 }
 
+variable "alb_security_group_id" {
+  description = "ALB security group ID from Module 1 (needed to allow port 5000 ingress)"
+  type        = string
+}
+
 # ---------------------------------------------------------------------------
 # ALB (from Module 1 outputs)
 # ---------------------------------------------------------------------------

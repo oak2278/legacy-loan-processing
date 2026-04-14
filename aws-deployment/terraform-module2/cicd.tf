@@ -903,3 +903,58 @@ resource "aws_codepipeline" "linux" {
     Platform = "linux"
   }
 }
+
+# ===========================================================================
+# IAM Policies for EC2 Instance Role (CodeDeploy agent on instance needs these)
+# ===========================================================================
+
+data "aws_iam_instance_profile" "app" {
+  name = var.iam_instance_profile_name
+}
+
+resource "aws_iam_role_policy" "ec2_codedeploy_s3" {
+  name = "${local.name_prefix}-ec2-codedeploy-s3"
+  role = data.aws_iam_instance_profile.app.role_name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:GetObjectVersion",
+          "s3:ListBucket"
+        ]
+        Resource = [
+          aws_s3_bucket.pipeline_artifacts.arn,
+          "${aws_s3_bucket.pipeline_artifacts.arn}/*"
+        ]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "ec2_codedeploy_kms" {
+  name = "${local.name_prefix}-ec2-codedeploy-kms"
+  role = data.aws_iam_instance_profile.app.role_name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "kms:Decrypt",
+          "kms:DescribeKey"
+        ]
+        Resource = aws_kms_key.pipeline_artifacts.arn
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "ec2_codedeploy_managed" {
+  role       = data.aws_iam_instance_profile.app.role_name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforAWSCodeDeploy"
+}

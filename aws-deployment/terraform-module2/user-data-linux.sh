@@ -9,20 +9,10 @@ exec > >(tee -a "$LOG_FILE") 2>&1
 echo "=== Starting User Data Execution — $(date) ==="
 
 # -----------------------------------------------------------------------
-# 1. Install .NET 10 Runtime
+# 1. Install packages
 # -----------------------------------------------------------------------
-echo "Cleaning dnf cache..."
-dnf clean all
-rm -rf /var/cache/dnf/*
-
-# Wait for SSM agent auto-update to finish — it races with cloud-init for the dnf lock
-# See: https://github.com/amazonlinux/amazon-linux-2023/issues/397
-echo "Waiting for any background dnf operations to complete..."
-sleep 30
-
-echo "Installing .NET 10 runtime..."
-# .NET 10 is available in the Amazon Linux 2023 native repository
-dnf install -y aspnetcore-runtime-10.0
+echo "Installing .NET 10 runtime, ruby, and wget..."
+dnf install -y --setopt=cachedir=/tmp/dnf-fresh-cache aspnetcore-runtime-10.0 ruby wget
 
 # Verify installation
 dotnet --list-runtimes
@@ -43,6 +33,7 @@ ExecStart=/usr/bin/dotnet /opt/loan-processing/LoanProcessing.Web.dll --urls htt
 Restart=always
 RestartSec=10
 Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=ASPNETCORE_URLS=http://0.0.0.0:5000
 Environment=DOTNET_RUNNING_IN_CONTAINER=false
 
 [Install]
@@ -60,37 +51,22 @@ echo "Creating application directory..."
 mkdir -p /opt/loan-processing
 
 # -----------------------------------------------------------------------
-# 4. Install CodeDeploy Agent
+# 4. Install and Start CodeDeploy Agent (per AWS docs)
 # -----------------------------------------------------------------------
 echo "Installing CodeDeploy agent..."
-dnf install -y ruby wget
-
-wget "https://aws-codedeploy-${aws_region}.s3.${aws_region}.amazonaws.com/latest/install" -O /tmp/codedeploy-install
-chmod +x /tmp/codedeploy-install
-/tmp/codedeploy-install auto
-
-# Wait for CodeDeploy agent to start
-echo "Waiting for CodeDeploy agent..."
-MAX_ATTEMPTS=30
-AGENT_RUNNING=false
-for i in $(seq 1 $MAX_ATTEMPTS); do
-    if systemctl is-active --quiet codedeploy-agent; then
-        echo "CodeDeploy agent running on attempt $i"
-        AGENT_RUNNING=true
-        break
-    fi
-    sleep 5
-done
-
-if [ "$AGENT_RUNNING" = false ]; then
-    echo "WARNING: CodeDeploy agent not running after $MAX_ATTEMPTS attempts"
-fi
+cd /tmp
+wget "https://aws-codedeploy-${aws_region}.s3.${aws_region}.amazonaws.com/latest/install"
+chmod +x ./install
+./install auto
+systemctl enable codedeploy-agent 2>/dev/null || true
+systemctl start codedeploy-agent
 
 # -----------------------------------------------------------------------
 # 5. Configure Environment Metadata
 # -----------------------------------------------------------------------
 echo "Writing environment metadata..."
-cat > /opt/loan-processing/environment.conf <<EOF
+mkdir -p /etc/loan-processing
+cat > /etc/loan-processing/environment.conf <<EOF
 DB_ENDPOINT=${db_endpoint}
 DB_NAME=${db_name}
 DB_SECRET_ARN=${db_secret_arn}

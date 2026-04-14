@@ -71,6 +71,20 @@ locals {
 }
 
 # ---------------------------------------------------------------------------
+# Security Group Rule — Allow ALB to reach Kestrel on port 5000
+# ---------------------------------------------------------------------------
+
+resource "aws_security_group_rule" "alb_to_kestrel" {
+  type                     = "ingress"
+  from_port                = 5000
+  to_port                  = 5000
+  protocol                 = "tcp"
+  description              = "Kestrel from ALB"
+  security_group_id        = var.app_security_group_id
+  source_security_group_id = var.alb_security_group_id
+}
+
+# ---------------------------------------------------------------------------
 # Linux Launch Template
 # ---------------------------------------------------------------------------
 
@@ -159,7 +173,7 @@ resource "aws_lb_target_group" "linux" {
   stickiness {
     type            = "lb_cookie"
     cookie_duration = 86400
-    enabled         = true
+    enabled         = false
   }
 
   tags = merge(
@@ -183,7 +197,7 @@ resource "aws_autoscaling_group" "linux" {
   vpc_zone_identifier       = var.private_subnet_ids
   target_group_arns         = [aws_lb_target_group.linux.arn]
   health_check_type         = "ELB"
-  health_check_grace_period = 600
+  health_check_grace_period = 1800
   min_size                  = 1
   max_size                  = 2
   desired_capacity          = 1
@@ -263,8 +277,8 @@ resource "aws_lb_listener_rule" "weighted" {
       }
 
       stickiness {
-        enabled  = true
-        duration = 86400
+        enabled  = false
+        duration = 1
       }
     }
   }
@@ -275,3 +289,5 @@ resource "aws_lb_listener_rule" "weighted" {
     }
   }
 }
+
+

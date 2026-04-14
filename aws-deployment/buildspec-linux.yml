@@ -2,19 +2,22 @@ version: 0.2
 
 phases:
   install:
+    runtime-versions:
+      dotnet: 10.0
     commands:
-      - echo "Verifying .NET SDK installation..."
-      - dotnet --version || (echo ".NET SDK not found - installing .NET 10 SDK..." && curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 10.0 --install-dir /usr/share/dotnet && ln -sf /usr/share/dotnet/dotnet /usr/bin/dotnet && dotnet --version)
+      - dotnet --version
 
   pre_build:
     commands:
       - echo "Restoring NuGet packages..."
-      - dotnet restore
+      - dotnet restore LoanProcessing.Web/LoanProcessing.Web.csproj
+      - dotnet restore LoanProcessing.Tests/LoanProcessing.Tests.csproj
 
   build:
     commands:
       - echo "Building solution in Release configuration..."
-      - dotnet build --configuration Release
+      - dotnet build LoanProcessing.Web/LoanProcessing.Web.csproj --configuration Release
+      - dotnet build LoanProcessing.Tests/LoanProcessing.Tests.csproj --configuration Release
 
       - echo "Running FsCheck property-based tests..."
       - |

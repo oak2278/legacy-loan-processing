@@ -128,7 +128,7 @@ resource "aws_lb_target_group" "app" {
   stickiness {
     type            = "lb_cookie"
     cookie_duration = 86400
-    enabled         = true
+    enabled         = false
   }
 
   tags = merge(
