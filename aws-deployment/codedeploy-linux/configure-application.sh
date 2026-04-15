@@ -3,7 +3,7 @@
 set -euo pipefail
 
 APP_DIR="/opt/loan-processing"
-ENV_CONF="$APP_DIR/environment.conf"
+ENV_CONF="/etc/loan-processing/environment.conf"
 APPSETTINGS="$APP_DIR/appsettings.json"
 
 echo "=== Configuring application — $(date) ==="
