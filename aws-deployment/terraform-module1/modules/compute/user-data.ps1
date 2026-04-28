@@ -87,13 +87,21 @@ ${cloudwatch_config}
     "---`nregion: $region" | Out-File -FilePath $codeDeployConfigPath -Encoding UTF8 -Force
     Write-Host "CodeDeploy Agent configured for region: $region, environment: ${environment}"
 
-    # Trigger CodePipeline (wait for CodeDeploy agent to register with ASG deployment group)
+    # Trigger CodePipeline (stop any stalled deployment from auto-trigger, then start fresh)
     if ($agentRunning) {
-        Write-Host "Waiting 60s for CodeDeploy agent to register with deployment group..."
-        Start-Sleep -Seconds 60
-        Write-Host "Triggering CodePipeline..."
         try {
+            Import-Module AWS.Tools.CodeDeploy
             Import-Module AWS.Tools.CodePipeline
+            Write-Host "Stopping any stalled deployments..."
+            $stalled = Get-CDDeploymentList -ApplicationName "loan-processing-${environment}" -IncludeOnlyStatus "InProgress" -Region $region
+            if ($stalled) {
+                foreach ($d in $stalled) {
+                    Stop-CDDeployment -DeploymentId $d -AutoRollbackEnabled $false -Region $region
+                    Write-Host "Stopped stalled deployment: $d"
+                }
+                Start-Sleep -Seconds 10
+            }
+            Write-Host "Triggering CodePipeline..."
             Start-CPPipelineExecution -Name "loan-processing-pipeline-${environment}" -Region $region
             Write-Host "CodePipeline triggered successfully"
         } catch {

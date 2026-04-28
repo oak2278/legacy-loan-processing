@@ -197,6 +197,14 @@ resource "aws_iam_role_policy" "instance" {
           "codepipeline:StartPipelineExecution"
         ]
         Resource = "arn:aws:codepipeline:*:*:loan-processing-pipeline-${var.environment}"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "codedeploy:ListDeployments",
+          "codedeploy:StopDeployment"
+        ]
+        Resource = "*"
       }
     ]
   })
