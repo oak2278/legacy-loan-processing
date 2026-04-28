@@ -54,7 +54,9 @@ try {
         Write-DeploymentLog "Loaded deployment config: region=$awsRegion, environment=$($deployConfig.Environment)"
     } else {
         Write-DeploymentLog "No deployment config found at $configPath, using defaults" "WARN"
-        $awsRegion = "us-east-2"
+        # Detect region from instance metadata
+        $token = Invoke-RestMethod -Uri "http://169.254.169.254/latest/api/token" -Method PUT -Headers @{ "X-aws-ec2-metadata-token-ttl-seconds" = "21600" }
+        $awsRegion = Invoke-RestMethod -Uri "http://169.254.169.254/latest/meta-data/placement/region" -Headers @{ "X-aws-ec2-metadata-token" = $token }
         $secretArn = $null
         $deployConfig = @{ Environment = "workshop" }
     }

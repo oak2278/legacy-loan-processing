@@ -38,7 +38,7 @@ app_version = "1.0.0"
 enable_detailed_monitoring = false
 
 # Security Configuration
-allowed_cidr_blocks = ["0.0.0.0/0"]  # Restrict to your IP for production
+allowed_cidr_blocks = []  # Your IP is auto-detected; add extra CIDRs here if needed
 enable_waf          = false
 
 # Additional Tags

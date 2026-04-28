@@ -3,8 +3,9 @@
 # Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 12.1
 
 resource "aws_codepipeline" "loan_processing" {
-  name     = "loan-processing-pipeline-${var.environment}"
-  role_arn = aws_iam_role.codepipeline.arn
+  name          = "loan-processing-pipeline-${var.environment}"
+  role_arn      = aws_iam_role.codepipeline.arn
+  pipeline_type = "V2"
 
   artifact_store {
     type     = "S3"
@@ -13,6 +14,19 @@ resource "aws_codepipeline" "loan_processing" {
     encryption_key {
       id   = aws_kms_key.pipeline_artifacts.arn
       type = "KMS"
+    }
+  }
+
+  # Explicit trigger — only fires on pushes, NOT on pipeline creation
+  trigger {
+    provider_type = "CodeStarSourceConnection"
+    git_configuration {
+      source_action_name = "Source"
+      push {
+        branches {
+          includes = [var.github_branch_name]
+        }
+      }
     }
   }
 
@@ -32,7 +46,7 @@ resource "aws_codepipeline" "loan_processing" {
         ConnectionArn        = var.github_connection_arn
         FullRepositoryId     = var.github_repository_id
         BranchName           = var.github_branch_name
-        DetectChanges        = "true"
+        DetectChanges        = "false"
         OutputArtifactFormat = "CODE_ZIP"
       }
     }
@@ -118,6 +132,7 @@ resource "aws_codepipeline" "loan_processing" {
 # The existing Windows pipeline (aws_codepipeline.loan_processing) remains untouched
 
 resource "aws_codepipeline" "linux" {
+  count    = var.linux_target_group_name != "" ? 1 : 0
   name     = "loan-processing-linux-pipeline-${var.environment}"
   role_arn = aws_iam_role.codepipeline.arn
 
@@ -210,7 +225,7 @@ resource "aws_codepipeline" "linux" {
 
       configuration = {
         ApplicationName     = aws_codedeploy_app.loan_processing.name
-        DeploymentGroupName = aws_codedeploy_deployment_group.linux.deployment_group_name
+        DeploymentGroupName = aws_codedeploy_deployment_group.linux[0].deployment_group_name
       }
     }
   }

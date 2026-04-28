@@ -106,34 +106,12 @@ taskkill /PID <PID> /F
 
 ### For Development
 - Read [CONTRIBUTING.md](CONTRIBUTING.md) for code guidelines
-- Review [requirements.md](../.kiro/specs/legacy-dotnet-inventory-app/requirements.md) for business rules
-- Check [design.md](../.kiro/specs/legacy-dotnet-inventory-app/design.md) for architecture
+- Review [DATABASE_SETUP.md](DATABASE_SETUP.md) for stored procedure reference
 
 ### For Deployment
-- Follow [DEPLOYMENT.md](../DEPLOYMENT.md) for production deployment
-- Review [APPLICATION_CONFIGURATION.md](../APPLICATION_CONFIGURATION.md) for settings
-- Check [DATABASE_SETUP.md](../DATABASE_SETUP.md) for database configuration
-
-### For Testing
-- Run existing tests: `dotnet test`
-- Review [LoanProcessing.Web/Tests/README.md](../LoanProcessing.Web/Tests/README.md) for testing guide
-- Add new tests following [CONTRIBUTING.md](CONTRIBUTING.md) guidelines
-
-## Documentation
-
-- **README.md** - Project overview and modernization roadmap
-- **DEPLOYMENT.md** - Complete deployment guide
-- **DATABASE_SETUP.md** - Database setup and maintenance
-- **APPLICATION_CONFIGURATION.md** - Configuration reference
-- **CONTRIBUTING.md** - Contribution guidelines
-- **CHANGELOG.md** - Version history
-
-## Support
-
-Need help? Check:
-1. [DOCUMENTATION_GUIDE.md](DOCUMENTATION_GUIDE.md) - Documentation organization
-2. [DEPLOYMENT.md](../DEPLOYMENT.md) - Troubleshooting section
-3. Project issues in repository
+- Follow [DEPLOYMENT.md](DEPLOYMENT.md) for local/IIS deployment
+- Review [APPLICATION_CONFIGURATION.md](APPLICATION_CONFIGURATION.md) for settings
+- See [aws-deployment/](../aws-deployment/) for AWS CI/CD pipeline
 
 ---
 

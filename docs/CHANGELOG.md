@@ -70,7 +70,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - APPLICATION_CONFIGURATION.md - Configuration reference (450+ lines)
 - CONTRIBUTING.md - Contribution guidelines
 - CHANGELOG.md - This file
-- DOCUMENTATION_GUIDE.md - Documentation organization guide
 - Component-specific documentation for database and testing
 
 ### Technical Details
@@ -81,7 +80,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Entity Framework 6.4.4
 - SQL Server 2016+ (or LocalDB)
 - Bootstrap 3.4.1
-- jQuery 3.4.1
+- jQuery 3.7.1
 - FSCheck 2.16.6
 
 #### Architecture Patterns
@@ -152,13 +151,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Minimum 4GB RAM, 10GB disk space
 
 ### Migration Path
-See README.md for detailed 6-phase modernization roadmap:
-1. Extract Business Logic (Low Risk)
-2. Improve Testability (Medium Risk)
-3. Upgrade Framework (High Risk)
-4. Modern ORM (Medium Risk)
-5. API-First Architecture (High Risk)
-6. Modern UI (High Risk)
+See [workshop modules](workshop/) for guided modernization exercises.
 
 ## Version History
 
@@ -183,8 +176,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on contributing to this pr
 
 For questions or issues:
 - Check documentation in `docs/` directory
-- Review [DEPLOYMENT.md](../DEPLOYMENT.md) for deployment issues
-- Review [DATABASE_SETUP.md](../DATABASE_SETUP.md) for database issues
+- Review [DEPLOYMENT.md](DEPLOYMENT.md) for deployment issues
+- Review [DATABASE_SETUP.md](DATABASE_SETUP.md) for database issues
 - Create an issue in the project repository
 
 ---

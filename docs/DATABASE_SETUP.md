@@ -561,7 +561,6 @@ After completing database setup:
 - **SQL Server Documentation**: https://docs.microsoft.com/en-us/sql/
 - **T-SQL Reference**: https://docs.microsoft.com/en-us/sql/t-sql/
 - **Database Design Best Practices**: https://docs.microsoft.com/en-us/sql/relational-databases/
-- **Project Documentation**: `.kiro/specs/legacy-dotnet-inventory-app/`
 
 ---
 

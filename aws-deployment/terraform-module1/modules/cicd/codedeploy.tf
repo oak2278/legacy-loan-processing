@@ -118,6 +118,7 @@ resource "aws_codedeploy_deployment_group" "loan_processing" {
 # Requirements: 8.5, 9.1
 
 resource "aws_codedeploy_deployment_group" "linux" {
+  count                 = var.linux_target_group_name != "" ? 1 : 0
   app_name              = aws_codedeploy_app.loan_processing.name
   deployment_group_name = "loan-processing-linux-${var.environment}"
   service_role_arn      = aws_iam_role.codedeploy.arn
