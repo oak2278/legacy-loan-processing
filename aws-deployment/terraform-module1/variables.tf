@@ -125,9 +125,9 @@ variable "db_username" {
 }
 
 variable "db_multi_az" {
-  description = "Enable Multi-AZ deployment for RDS"
+  description = "Enable Multi-AZ deployment for RDS (not supported by sqlserver-ex)"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "db_backup_retention_period" {

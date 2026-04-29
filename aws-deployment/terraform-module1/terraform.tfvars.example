@@ -27,7 +27,7 @@ db_allocated_storage      = 20
 db_engine_version         = "15.00.4335.1.v1"  # SQL Server 2019 Express
 db_name                   = "LoanProcessing"
 db_username               = "sqladmin"
-db_multi_az               = true
+db_multi_az               = false  # SQL Server Express doesn't support Multi-AZ
 db_backup_retention_period = 7
 
 # Monitoring Configuration

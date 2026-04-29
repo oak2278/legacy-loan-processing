@@ -54,9 +54,9 @@ variable "db_username" {
 }
 
 variable "multi_az" {
-  description = "Enable Multi-AZ deployment"
+  description = "Enable Multi-AZ deployment (not supported by sqlserver-ex)"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "backup_retention_period" {
