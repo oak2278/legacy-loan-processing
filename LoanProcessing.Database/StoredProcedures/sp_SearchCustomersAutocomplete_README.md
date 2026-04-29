@@ -338,8 +338,6 @@ Potential improvements for future versions:
 
 ## Related Documentation
 
-- **Design Document**: `.kiro/specs/customer-selection-loan-application/design.md`
-- **Requirements**: `.kiro/specs/customer-selection-loan-application/requirements.md`
 - **Test Script**: `Scripts/TestSearchCustomersAutocomplete.sql`
 - **Deployment Script**: `Scripts/CreateSearchCustomersAutocomplete.sql`
 

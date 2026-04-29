@@ -17,10 +17,8 @@ data "aws_ami" "windows_2022" {
 }
 
 # User data script for EC2 initialization
-data "template_file" "user_data" {
-  template = file("${path.module}/user-data.ps1")
-
-  vars = {
+locals {
+  user_data = templatefile("${path.module}/user-data.ps1", {
     db_endpoint      = var.db_endpoint
     db_name          = var.db_name
     db_secret_arn    = var.db_secret_arn
@@ -31,7 +29,7 @@ data "template_file" "user_data" {
       project_name = var.project_name
       environment  = var.environment
     })
-  }
+  })
 }
 
 # Launch Template
@@ -47,7 +45,7 @@ resource "aws_launch_template" "app" {
 
   vpc_security_group_ids = [var.app_security_group_id]
 
-  user_data = base64encode(data.template_file.user_data.rendered)
+  user_data = base64encode(local.user_data)
 
   metadata_options {
     http_endpoint               = "enabled"

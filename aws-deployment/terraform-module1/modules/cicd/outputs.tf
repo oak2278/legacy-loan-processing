@@ -172,15 +172,15 @@ output "linux_codebuild_project_arn" {
 
 output "linux_codepipeline_name" {
   description = "Name of the Linux CodePipeline"
-  value       = aws_codepipeline.linux.name
+  value       = var.linux_target_group_name != "" ? aws_codepipeline.linux[0].name : ""
 }
 
 output "linux_codepipeline_arn" {
   description = "ARN of the Linux CodePipeline"
-  value       = aws_codepipeline.linux.arn
+  value       = var.linux_target_group_name != "" ? aws_codepipeline.linux[0].arn : ""
 }
 
 output "linux_codedeploy_deployment_group_name" {
   description = "Name of the Linux CodeDeploy deployment group"
-  value       = aws_codedeploy_deployment_group.linux.deployment_group_name
+  value       = var.linux_target_group_name != "" ? aws_codedeploy_deployment_group.linux[0].deployment_group_name : ""
 }

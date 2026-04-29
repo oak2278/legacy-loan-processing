@@ -87,84 +87,34 @@ ${cloudwatch_config}
     "---`nregion: $region" | Out-File -FilePath $codeDeployConfigPath -Encoding UTF8 -Force
     Write-Host "CodeDeploy Agent configured for region: $region, environment: ${environment}"
 
-    # Verify CodeDeploy agent registration
-    $agentRegistered = $false
+    # Trigger CodePipeline (stop any stalled deployment from auto-trigger, then start fresh)
     if ($agentRunning) {
-        Write-Host "Verifying CodeDeploy agent registration..."
         try {
-            $imdsToken = Invoke-RestMethod -Uri "http://169.254.169.254/latest/api/token" -Method PUT -Headers @{ "X-aws-ec2-metadata-token-ttl-seconds" = "21600" } -ErrorAction Stop
-            $instanceId = Invoke-RestMethod -Uri "http://169.254.169.254/latest/meta-data/instance-id" -Headers @{ "X-aws-ec2-metadata-token" = $imdsToken } -ErrorAction Stop
-            Write-Host "Instance ID: $instanceId"
-        } catch {
-            Write-Host "WARNING: Failed to retrieve instance ID: $_"
-        }
-        if ($instanceId) {
             Import-Module AWS.Tools.CodeDeploy
-            $deploymentGroup = "loan-processing-${environment}"
-            $regMaxAttempts = 30
-            for ($r = 1; $r -le $regMaxAttempts; $r++) {
-                try {
-                    Write-Host "Registration check attempt $r/$regMaxAttempts"
-                    $target = Get-CDDeploymentTarget -DeploymentGroupName $deploymentGroup -TargetId $instanceId -Region $region -ErrorAction Stop
-                    if ($target -and $target.InstanceTarget.Status -in @("Registered", "Succeeded", "Ready")) {
-                        Write-Host "CodeDeploy agent registered on attempt $r"
-                        $agentRegistered = $true
-                        break
-                    }
-                } catch {
-                    Write-Host "Registration check attempt $r failed: $_"
+            Import-Module AWS.Tools.CodePipeline
+            Write-Host "Stopping any stalled deployments..."
+            $stalled = Get-CDDeploymentList -ApplicationName "loan-processing-${environment}" -IncludeOnlyStatus "InProgress" -Region $region
+            if ($stalled) {
+                foreach ($d in $stalled) {
+                    Stop-CDDeployment -DeploymentId $d -AutoRollbackEnabled $false -Region $region
+                    Write-Host "Stopped stalled deployment: $d"
                 }
                 Start-Sleep -Seconds 10
             }
-            if (-not $agentRegistered) { Write-Host "Warning: Agent not registered after $regMaxAttempts attempts" }
-        }
-    }
-
-    # Trigger CodePipeline
-    if ($agentRunning -and $agentRegistered) {
-        Write-Host "Triggering CodePipeline..."
-        try {
-            Import-Module AWS.Tools.CodePipeline
+            Write-Host "Triggering CodePipeline..."
             Start-CPPipelineExecution -Name "loan-processing-pipeline-${environment}" -Region $region
             Write-Host "CodePipeline triggered successfully"
         } catch {
             Write-Host "WARNING: Failed to trigger CodePipeline: $_"
         }
-    } elseif ($agentRunning -and -not $agentRegistered) {
-        Write-Host "WARNING: Skipping pipeline - agent not registered after timeout"
     } else {
         Write-Host "Skipping pipeline trigger - CodeDeploy Agent not running"
     }
 
-    # Install Git
-    Write-Host "Installing Git..."
-    $gitInstallerPath = "C:\Windows\Temp\git-installer.exe"
-    Invoke-WebRequest -Uri "https://github.com/git-for-windows/git/releases/download/v2.43.0.windows.1/Git-2.43.0-64-bit.exe" -OutFile $gitInstallerPath
-    Start-Process -FilePath $gitInstallerPath -ArgumentList "/VERYSILENT", "/NORESTART", "/NOCANCEL", "/SP-", "/CLOSEAPPLICATIONS", "/RESTARTAPPLICATIONS", "/COMPONENTS=`"icons,ext\reg\shellhere,assoc,assoc_sh`"" -Wait
-    $env:Path += ";C:\Program Files\Git\cmd"
-
-    # Clone repository
-    Write-Host "Cloning application..."
-    $repoPath = "C:\Deploy\legacy-loan-processing"
-    $appPath = "C:\inetpub\wwwroot\LoanProcessing"
-    New-Item -Path "C:\Deploy" -ItemType Directory -Force
-    Set-Location "C:\Deploy"
-    & "C:\Program Files\Git\cmd\git.exe" clone https://github.com/aws-shawn/legacy-loan-processing.git
-
-    # Install NuGet CLI and restore packages
-    $nugetPath = "C:\Windows\Temp\nuget.exe"
-    Invoke-WebRequest -Uri "https://dist.nuget.org/win-x86-commandline/latest/nuget.exe" -OutFile $nugetPath
-    Set-Location "$repoPath\LoanProcessing"
-    & $nugetPath restore packages.config -PackagesDirectory "$repoPath\packages"
-
-    # Deploy application files
-    Write-Host "Deploying application..."
-    New-Item -Path $appPath -ItemType Directory -Force
-    Copy-Item -Path "$repoPath\LoanProcessing\*" -Destination $appPath -Recurse -Force -Exclude @("*.cs", "*.csproj", "*.csproj.user", "obj", "Properties")
-    Copy-Item -Path "$repoPath\LoanProcessing\bin" -Destination "$appPath\bin" -Recurse -Force
-
-    # Configure IIS
+    # Configure IIS site (CodeDeploy will populate the app directory)
     Write-Host "Configuring IIS..."
+    $appPath = "C:\inetpub\wwwroot\LoanProcessing"
+    New-Item -Path $appPath -ItemType Directory -Force
     Import-Module WebAdministration
     $appPoolName = "LoanProcessingAppPool"
     if (!(Test-Path "IIS:\AppPools\$appPoolName")) {

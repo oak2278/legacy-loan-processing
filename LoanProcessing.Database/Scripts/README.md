@@ -200,9 +200,6 @@ After running these scripts:
 
 ## Additional Resources
 
-- **Task Summaries**: See TASK_2.1_SUMMARY.md, TASK_2.2_SUMMARY.md, TASK_2.3_SUMMARY.md
-- **Design Document**: .kiro/specs/legacy-dotnet-inventory-app/design.md
-- **Requirements**: .kiro/specs/legacy-dotnet-inventory-app/requirements.md
 - **Database Project**: LoanProcessing.Database/LoanProcessing.Database.sqlproj
 
 ## Support

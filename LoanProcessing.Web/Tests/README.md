@@ -242,5 +242,3 @@ After completing Task 17.1 (FSCheck setup), the following property tests need to
 
 - [FSCheck Documentation](https://fscheck.github.io/FsCheck/)
 - [Property-Based Testing Guide](https://fsharpforfunandprofit.com/posts/property-based-testing/)
-- Design Document: `.kiro/specs/legacy-dotnet-inventory-app/design.md` (Testing Strategy section)
-- Requirements Document: `.kiro/specs/legacy-dotnet-inventory-app/requirements.md`
